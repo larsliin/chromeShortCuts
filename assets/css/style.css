@@ -1,0 +1,9 @@
+.field-group {
+    display: block;
+    font-size: 16px;
+    margin: 20px 0;
+}
+
+input {
+    display: block;
+}
