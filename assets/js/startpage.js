@@ -20,26 +20,26 @@ inpBookmarkUrl.addEventListener('keydown', onInpKeyDown);
 function onBtnAdBookmarkClick() {
     toggleModal(null, true);
 }
- 
+
 function toggleModal(type, toggle) {
     if (toggle) {
         modal.classList.add('show');
         addBookmark.classList.add('show');
-    } else { 
+    } else {
         modal.classList.remove('show');
         addBookmark.classList.remove('show');
     }
 }
 
-function onInpKeyDown(event) { 
-    if (event.keyCode === 13) { 
+function onInpKeyDown(event) {
+    if (event.keyCode === 13) {
         onCreateShortcutClick();
         event.preventDefault();
     }
 }
 
 // on submit button click
-async function onCreateShortcutClick() { 
+async function onCreateShortcutClick() {
     const folderName = inpBookmarkFolder.value;
     const bookmarkTitle = inpBookmarkTitle.value;
     const bookmarkUrl = inpBookmarkUrl.value;
@@ -47,9 +47,9 @@ async function onCreateShortcutClick() {
 
     const response = await checkAndCreateBookmarkFolder({ rootFolder, folderName, bookmarkTitle, bookmarkUrl });
     console.log(response);
-    
+
     const folderIndex = bookmarks.findIndex(e => e.id === response.folder.id);
-    if (response.bookmark) { 
+    if (response.bookmark) {
         addBookmarkToDOM(folderIndex, response.bookmark)
     }
 }
@@ -60,8 +60,8 @@ async function checkAndCreateBookmarkFolder(o) {
         const existingRootFolder = await searchBookmarkFolder(rootFolderName);
         let subFolderId;
         let folder;
-        
-        if (!rootFolderId) { 
+
+        if (!rootFolderId) {
             if (existingRootFolder.length === 0) {
                 // create root folder if no root folder
                 const createdRootFolder = await createBookmarkFolder('2', rootFolderName);
@@ -82,7 +82,7 @@ async function checkAndCreateBookmarkFolder(o) {
         // create subfolder
         if (o.folderName) {
             const existingFolder = await searchBookmarkFolder(o.folderName);
-            
+
             if (existingFolder.length === 0) {
                 // create bookmark folder if folder does not already exist
                 const createdFolder = await createBookmarkFolder(rootFolderId, o.folderName);
@@ -98,30 +98,30 @@ async function checkAndCreateBookmarkFolder(o) {
                 subFolderId = existingFolder[0].id;
                 folder = existingFolder[0];
             }
-        } else { 
+        } else {
             subFolderId = rootFolderId;
             folder = existingRootFolder[0];
         }
 
         // if bookmark title then create bookmark in folder
         let bookmark;
-        if (o.bookmarkTitle && o.bookmarkTitle !== '') { 
+        if (o.bookmarkTitle && o.bookmarkTitle !== '') {
             bookmark = await createBookmarkInFolder(subFolderId, o.bookmarkTitle, o.bookmarkUrl);
             const bookmarksFolder = bookmarks.find(e => e.id === bookmark.parentId);
             bookmarksFolder.children.push(bookmark);
         }
 
         toggleModal(null, false);
-        
-        resolve({folder, bookmark}); // Resolve the promise to indicate completion
+
+        resolve({ folder, bookmark }); // Resolve the promise to indicate completion
     });
 }
 
-function render() { 
-    bookmarks.forEach((folder, index) => { 
+function render() {
+    bookmarks.forEach((folder, index) => {
         addFolderToDOM(folder.name, index);
 
-        folder.children.forEach((bookmark) => { 
+        folder.children.forEach((bookmark) => {
             addBookmarkToDOM(index, bookmark);
         });
     });
@@ -135,7 +135,7 @@ function addFolderToDOM(name, index) {
     foldersContainer.appendChild(folder);
 }
 
-function addBookmarkToDOM(folderindex, bookmark) { 
+function addBookmarkToDOM(folderindex, bookmark) {
     const folder = document.getElementById(`folder_${folderindex}`);
 
     const link = document.createElement('a');
@@ -148,10 +148,10 @@ function addBookmarkToDOM(folderindex, bookmark) {
     const linkTitleContainer = document.createElement('span');
     linkTitleContainer.className = 'bookmark-title-container';
     linkTitleContainer.innerText = bookmark.title;
-    
+
     link.appendChild(linkImgContainer);
     link.appendChild(linkTitleContainer);
-    
+
     folder.appendChild(link);
 }
 
@@ -160,9 +160,9 @@ async function initBookmarks() {
     try {
         // get root bookmarks folder
         const rootFolder = await searchBookmarkFolder(rootFolderName);
-        
+
         // if no bookmarks do not continue
-        if (!rootFolder.length) { 
+        if (!rootFolder.length) {
             return;
         }
 
@@ -190,7 +190,7 @@ async function initBookmarks() {
             o.parentId = e.parentId;
             return o;
         });
-        
+
         // add root bookmarks as a bookmark folder to the beginning of bookmarks array
         bookmarks.unshift({
             children: bookmarksWithoutType,

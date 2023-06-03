@@ -1,6 +1,7 @@
 body {
     margin: 0;
 }
+
 .field-group {
     display: block;
     font-size: 16px;
@@ -28,14 +29,19 @@ input {
 
 .toolbar::after {
     position: absolute;
-    content: '';
+    content: "";
     display: block;
     height: 10px;
     width: 100vw;
-    background: rgb(0,0,0);
-    background: linear-gradient(180deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,0) 100%);
+    background: rgb(0, 0, 0);
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0) 100%
+    );
     bottom: -10px;
 }
+
 /*
 modal
 */
@@ -45,7 +51,7 @@ modal
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(255, 255, 255, .75);
+    background-color: rgba(255, 255, 255, 0.75);
     z-index: 99;
     display: none;
     justify-content: center;
@@ -60,8 +66,9 @@ modal
 .modal-inner {
     background-color: #fff;
     border-radius: 10px;
-    box-shadow: 0 0 20px 5px rgba(0,0,0,0.15);
+    box-shadow: 0 0 20px 5px rgba(0, 0, 0, 0.15);
     display: none;
+
     padding: 20px;
     width: 450px;
 }
