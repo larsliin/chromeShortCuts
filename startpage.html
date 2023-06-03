@@ -6,27 +6,46 @@
 </head>
 
 <body>
-    <div>
-        <div class="field-group">
-            Folder name
-            <input type="text" id="bookmark_folder" />
+    <div class="toolbar">
+        <div class="toolbar-inner">
+            <div>
+                <button id="btn_add_bookmark">Add Bookmark</button>
+            </div>
         </div>
-
-        <div class="field-group">
-            Bookmark Title
-            <input type="text" id="bookmark_title" />
-        </div>
-
-        <div class="field-group">
-            Bookmark URL
-            <input type="text" id="bookmark_url" value="http://123.com" />
-        </div>
-
-        <button id="submit">Create Folder </button>
     </div>
-    <div class="bookmarks" id="bookmarks">
+   
+    <div class="folders-outer" id="">
 
+        
+        <div class="folders-container" id="folders_container">
+            
+        </div>
     </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-inner add-bookmark" id="add_bookmark">
+            <div>
+                <div class="field-group">
+                    Folder name
+                    <input type="text" id="bookmark_folder" />
+                </div>
+        
+                <div class="field-group">
+                    Bookmark Title
+                    <input type="text" id="bookmark_title" />
+                </div>
+        
+                <div class="field-group">
+                    Bookmark URL
+                    <input type="text" id="bookmark_url" value="http://123.com" />
+                </div>
+        
+                <button id="btn_submit">Create Folder </button>
+            </div>
+        </div>
+        <div class="modal-inner" id="settings"></div>
+    </div>
+    <script src="assets/js/api.js"></script>
     <script src="assets/js/startpage.js"></script>
 </body>
 
