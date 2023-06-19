@@ -4,7 +4,9 @@
 	"version": "1.0",
 	"description": "Change the start page of the Chrome browser to a custom page",
 	"permissions": [
-		"bookmarks"
+		"bookmarks",
+		"storage",
+		"unlimitedStorage"
 	],
 	"action": {
 		"default_popup": "popup.html",

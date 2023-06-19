@@ -45,3 +45,36 @@ async function getBookmarksInFolder(folderId) {
         });
     });
 }
+
+async function getById(id) {
+    return new Promise((resolve, reject) => {
+        chrome.bookmarks.get(id, (event) => {
+            resolve(event);
+        });
+    });
+}
+
+async function setLocalStorage(payload) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.set(payload).then(() => {
+            resolve();
+        });
+    });
+}
+
+async function getFromStorage(id) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.get(id, function (data) {
+            resolve(data[id]);
+        });
+    });
+}
+
+async function toBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+    });
+}

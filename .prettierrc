@@ -1,17 +1,5 @@
 {
   "tabWidth": 4,
   "useTabs": false,
-  "[css]": {
-    "editor.defaultFormatter": null,
-    "editor.formatOnSave": true,
-    "tabWidth": 4,
-    "useTabs": false
-  },
-  "editor.formatOnSave": true,
-  "prettier.useTabs": true,
-  "prettier.proseWrap": "never",
-  "prettier.printWidth": 300,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.stylelint": true
-  }
+  "bracketSameLine": true
 }

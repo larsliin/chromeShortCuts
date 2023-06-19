@@ -1,0 +1,22 @@
+{
+  "name": "chromeshortcuts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/larsliin/chromeShortCuts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/larsliin/chromeShortCuts/issues"
+  },
+  "homepage": "https://github.com/larsliin/chromeShortCuts#readme",
+  "dependencies": {
+    "material-components-web": "^14.0.0"
+  }
+}

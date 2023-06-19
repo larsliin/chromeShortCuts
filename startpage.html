@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link
+            href="node_modules/material-components-web/dist/material-components-web.min.css"
+            rel="stylesheet" />
+
         <link rel="stylesheet" href="assets/css/style.css" />
     </head>
 
@@ -8,42 +12,113 @@
         <div class="toolbar">
             <div class="toolbar-inner">
                 <div>
-                    <button id="btn_add_bookmark">Add Bookmark</button>
+                    <button
+                        class="mdc-button mdc-button--raised"
+                        id="btn_add_bookmark">
+                        <div class="mdc-button__ripple"></div>
+                        <span class="mdc-button__label">Add Bookmark</span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="folders-outer" id="">
+        <div class="folders-outer">
             <div class="folders-container" id="folders_container"></div>
         </div>
 
-        <div class="modal" id="modal">
-            <div class="modal-inner add-bookmark" id="add_bookmark">
-                <div>
+        <div class="navigation-outer">
+            <div class="navigation-container" id="navigation_container"></div>
+        </div>
+
+        <div
+            id="dialog_add_bookmar"
+            class="mdc-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="my-dialog-label"
+            aria-describedby="my-dialog-description">
+            <div class="mdc-dialog__container">
+                <div class="mdc-dialog__surface">
                     <div class="field-group">
-                        Folder name
-                        <input type="text" id="bookmark_folder" />
+                        <label class="mdc-text-field mdc-text-field--filled">
+                            <span class="mdc-text-field__ripple"></span>
+                            <input
+                                type="text"
+                                id="inp_folder"
+                                class="mdc-text-field__input"
+                                aria-labelledby="bookmark-folder-label"
+                                name="inp_folder" />
+                            <span
+                                class="mdc-floating-label"
+                                id="bookmark-folder-label">
+                                Folder name
+                            </span>
+                            <span class="mdc-line-ripple"></span>
+                        </label>
                     </div>
 
                     <div class="field-group">
-                        Bookmark Title
-                        <input type="text" id="bookmark_title" />
+                        <label class="mdc-text-field mdc-text-field--filled">
+                            <span class="mdc-text-field__ripple"></span>
+                            <input
+                                type="text"
+                                id="inp_title"
+                                class="mdc-text-field__input"
+                                aria-labelledby="bookmark-title-label"
+                                name="inp_title" />
+                            <span
+                                class="mdc-floating-label"
+                                id="bookmark-title-label">
+                                Bookmark Title</span
+                            >
+                            <span class="mdc-line-ripple"></span>
+                        </label>
                     </div>
 
                     <div class="field-group">
-                        Bookmark URL
-                        <input
-                            type="text"
-                            id="bookmark_url"
-                            value="http://123.com"
-                        />
+                        <label class="mdc-text-field mdc-text-field--filled">
+                            <span class="mdc-text-field__ripple"></span>
+                            <input
+                                type="text"
+                                id="inp_url"
+                                value="http://123.com"
+                                class="mdc-text-field__input"
+                                aria-labelledby="bookmark-url-label"
+                                name="inp_url" />
+                            <span
+                                class="mdc-floating-label"
+                                id="bookmark-url-label"
+                                >Bookmark URL</span
+                            >
+                            <span class="mdc-line-ripple"></span>
+                        </label>
                     </div>
 
-                    <button id="btn_submit">Create Folder</button>
+                    <div class="field-group">
+                        <label class="mdc-button mdc-button--raised">
+                            Find Image
+                            <input class="inp-file" type="file" id="inp_file" />
+                        </label>
+                    </div>
+                    <footer class="mdc-dialog__actions">
+                        <button
+                            type="button"
+                            class="mdc-button mdc-dialog__button"
+                            data-mdc-dialog-action="cancel">
+                            Cancel
+                        </button>
+                        <button
+                            class="mdc-button mdc-button--raised"
+                            id="btn_submit">
+                            <div class="mdc-button__ripple"></div>
+                            <span class="mdc-button__label">Create Folder</span>
+                        </button>
+                    </footer>
                 </div>
             </div>
-            <div class="modal-inner" id="settings"></div>
+            <div class="mdc-dialog__scrim"></div>
         </div>
+        <script src="node_modules/material-components-web/dist/material-components-web.min.js"></script>
         <script src="assets/js/api.js"></script>
         <script src="assets/js/startpage.js"></script>
     </body>
