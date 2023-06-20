@@ -22,6 +22,7 @@ inpUrl.addEventListener('keydown', onInpKeyDown);
 inpFile.addEventListener('change', onAddFile);
 
 chrome.bookmarks.onCreated.addListener(onBrowserBookmarkCreated);
+chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
 
 /*
  * ADD-BOOKMARK MODAL
@@ -138,68 +139,101 @@ async function onBrowserBookmarkCreated(event) {
 
     if (item.url) {
         // bookmark added
-        const folderIndex = bookmarks.findIndex(e => e.id === item.parentId);
-        addBookmarkToDOM(item, folderIndex);
-
-        foldersContainer.style.transform = ``;
+        const folder = bookmarks.find(e => e.id === item.parentId);
+        addBookmarkToDOM(item, folder);
     } else {
         // folder added
         const folder = bookmarks.find(e => e.id === item.id);
-        const folderIndex = bookmarks.findIndex(e => e.id === item.id);
-        if (!document.getElementById(`folder_${folderIndex}`)) {
-            addFolderToDOM(folder, folderIndex);
+        const folderIndex = bookmarks.find(e => e.id === item.id);
+        if (!document.getElementById(`folder_${folder.id}`)) {
+            addFolderToDOM(folder);
         }
     }
+
+    buildNavigation();
+}
+
+async function onBrowserBookmarkRemoved(event) {
+    // debugger;
+    const folder = bookmarks.find(e => e.id === event);
+    if (folder) {
+        console.log('folder deleted');
+        console.log(folder);
+
+        const elem = document.getElementById(`folder_${folder.id}`);
+        elem.remove();
+        bookmarks = bookmarks.filter(e => e.id !== event);
+    } else {
+        console.log('bookmark deleted');
+        const folder = bookmarks.find(e => e.children.find(a => a.id === event));
+        const bookmark = folder.children.find(e => e.id === event);
+        const elem = document.getElementById(`bookmark_${bookmark.id}`);
+
+        if (elem.parentNode.childNodes.length === 1) {
+            // onBrowserBookmarkRemoved(folder.id);
+            // debugger;
+            chrome.bookmarks.remove({ id: folder.id });
+
+        } else {
+            elem.remove();
+
+            bookmarks = bookmarks.map(obj => ({
+                ...obj,
+                children: obj.children.filter(nestedObj => nestedObj.id !== event)
+            }));
+        }
+    }
+
 }
 
 /*
  * RENDER BOOKMARKS
  */
 // add bookmarks folder container to DOM
-function addFolderToDOM(folder, index) {
+function addFolderToDOM(folder) {
     const container = document.createElement('div');
     container.className = 'folder';
-    container.id = `folder_${index}`;
+    container.id = `folder_${folder.id}`;
     container.setAttribute('_name', folder.name);
     container.setAttribute('_folder', folder.id);
     foldersContainer.appendChild(container);
 }
 
 // add bookmark to DOM in container
-async function addBookmarkToDOM(bookmark, folderindex, addimage) {
-    const folder = document.getElementById(`folder_${folderindex}`);
+async function addBookmarkToDOM(bookmark, folder, addimage) {
+    const folderElem = document.getElementById(`folder_${folder.id}`);
 
-    const link = document.createElement('a');
-    link.className = 'bookmark';
-    link.href = bookmark.url;
-    link.id = `bookmark_${bookmark.id}`;
+    const linkElem = document.createElement('a');
+    linkElem.className = 'bookmark';
+    linkElem.href = bookmark.url;
+    linkElem.id = `bookmark_${bookmark.id}`;
 
-    const linkImgContainer = document.createElement('span');
-    linkImgContainer.className = 'bookmark-image-container';
+    const linkImgContainerElem = document.createElement('span');
+    linkImgContainerElem.className = 'bookmark-image-container';
 
     const linkTitleContainer = document.createElement('span');
     linkTitleContainer.className = 'bookmark-title-container';
     linkTitleContainer.innerText = bookmark.title;
 
-    link.appendChild(linkImgContainer);
-    link.appendChild(linkTitleContainer);
+    linkElem.appendChild(linkImgContainerElem);
+    linkElem.appendChild(linkTitleContainer);
 
-    folder.appendChild(link);
+    folderElem.appendChild(linkElem);
 
     if (addimage) {
         addImageToDom(bookmark);
     }
 }
 
-// if image is stored in local storage, add image to bookmark
+// if image is stored in local storage, add image to DOM bookmark
 async function addImageToDom(bookmark) {
     if (!bookmark) {
         return;
     }
 
-    const linkImgContainer = document.querySelector(`#bookmark_${bookmark.id} .bookmark-image-container`);
+    const linkImgContainerElem = document.querySelector(`#bookmark_${bookmark.id} .bookmark-image-container`);
 
-    if (!linkImgContainer) {
+    if (!linkImgContainerElem) {
         return;
     }
 
@@ -208,12 +242,12 @@ async function addImageToDom(bookmark) {
     if (storageItem) {
         const imgElem = document.createElement('img');
 
-        linkImgContainer.classList.remove('fill');
+        linkImgContainerElem.classList.remove('fill');
         imgElem.src = storageItem.image;
         imgElem.class = 'bookmark-image';
-        linkImgContainer.appendChild(imgElem);
+        linkImgContainerElem.appendChild(imgElem);
     } else {
-        linkImgContainer.classList.add('fill');
+        linkImgContainerElem.classList.add('fill');
     }
 }
 /*
@@ -291,10 +325,10 @@ async function init() {
     buildNavigation();
 
     bookmarks.forEach((folder, index) => {
-        addFolderToDOM(folder, index);
+        addFolderToDOM(folder);
 
         folder.children.forEach((bookmark) => {
-            addBookmarkToDOM(bookmark, index, true);
+            addBookmarkToDOM(bookmark, folder, true);
         });
     });
 }
