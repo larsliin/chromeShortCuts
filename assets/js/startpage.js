@@ -157,12 +157,13 @@ async function onBrowserBookmarkRemoved(event) {
     // debugger;
     const folder = bookmarks.find(e => e.id === event);
     if (folder) {
-        console.log('folder deleted');
-        console.log(folder);
-
         const elem = document.getElementById(`folder_${folder.id}`);
         elem.remove();
+
+        removeNavDot(event);
+
         bookmarks = bookmarks.filter(e => e.id !== event);
+
     } else {
         console.log('bookmark deleted');
         const folder = bookmarks.find(e => e.children.find(a => a.id === event));
@@ -170,10 +171,7 @@ async function onBrowserBookmarkRemoved(event) {
         const elem = document.getElementById(`bookmark_${bookmark.id}`);
 
         if (elem.parentNode.childNodes.length === 1) {
-            // onBrowserBookmarkRemoved(folder.id);
-            // debugger;
-            chrome.bookmarks.remove({ id: folder.id });
-
+            chrome.bookmarks.remove(folder.id);
         } else {
             elem.remove();
 
@@ -183,7 +181,6 @@ async function onBrowserBookmarkRemoved(event) {
             }));
         }
     }
-
 }
 
 /*
@@ -262,7 +259,7 @@ function buildNavigation() {
         bookmarks.forEach((bookmark) => {
             const navItemContainer = document.createElement('button');
             navItemContainer.className = 'navigation-item';
-            navItemContainer.setAttribute('_folder', `${bookmark.id}`);
+            navItemContainer.id = `nav_${bookmark.id}`;
             navItemContainer.addEventListener('click', onNavClick);
 
             const navItem = document.createElement('div');
@@ -276,8 +273,23 @@ function buildNavigation() {
 
 // navtigation click handler
 function onNavClick(event) {
-    const targetId = event.currentTarget.getAttribute('_folder');
-    const index = bookmarks.findIndex(e => e.id === targetId);
+    const folderId = event.currentTarget.id.split('_')[1];
+    slide(folderId);
+}
+
+function removeNavDot(id) {
+    document.getElementById(`nav_${id}`).remove();
+
+    const currentIndex = bookmarks.findIndex(e => e.id === id);
+
+    if (currentIndex === bookmarks.length - 1) {
+        slide(bookmarks[bookmarks.length - 2].id);
+    }
+}
+
+// move bookmarks slider to folder
+function slide(folderid) {
+    const index = bookmarks.findIndex(e => e.id === folderid);
 
     if (index) {
         const x = -1 * (index * 100);
