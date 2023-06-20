@@ -56,6 +56,8 @@ async function onCreateBookmarkClick() {
     const bookmarkUrl = inpUrl.value;
 
     await createBookmark({ folderName, bookmarkTitle, bookmarkUrl });
+
+    slide(bookmarks.find(e => e.name === folderName).id);
 }
 
 async function getBase64Data(file) {
@@ -134,7 +136,7 @@ async function createBookmark(o) {
  * CHROME BOOKMARK CREATED HANDLER
  */
 async function onBrowserBookmarkCreated(event) {
-    const response = await getById(event);
+    const response = await getBookmarkById(event);
     const item = response[0];
 
     if (item.url) {
@@ -144,7 +146,6 @@ async function onBrowserBookmarkCreated(event) {
     } else {
         // folder added
         const folder = bookmarks.find(e => e.id === item.id);
-        const folderIndex = bookmarks.find(e => e.id === item.id);
         if (!document.getElementById(`folder_${folder.id}`)) {
             addFolderToDOM(folder);
         }
@@ -165,7 +166,6 @@ async function onBrowserBookmarkRemoved(event) {
         bookmarks = bookmarks.filter(e => e.id !== event);
 
     } else {
-        console.log('bookmark deleted');
         const folder = bookmarks.find(e => e.children.find(a => a.id === event));
         const bookmark = folder.children.find(e => e.id === event);
         const elem = document.getElementById(`bookmark_${bookmark.id}`);
@@ -197,29 +197,36 @@ function addFolderToDOM(folder) {
 }
 
 // add bookmark to DOM in container
-async function addBookmarkToDOM(bookmark, folder, addimage) {
+async function addBookmarkToDOM(bookmark, folder) {
     const folderElem = document.getElementById(`folder_${folder.id}`);
 
+    const linkContainerElem = document.createElement('span');
+    linkContainerElem.className = 'bookmark';
+    linkContainerElem.id = `bookmark_${bookmark.id}`;
+    folderElem.appendChild(linkContainerElem);
+
     const linkElem = document.createElement('a');
-    linkElem.className = 'bookmark';
     linkElem.href = bookmark.url;
-    linkElem.id = `bookmark_${bookmark.id}`;
+    linkElem.className = 'bookmark-link';
+    linkContainerElem.appendChild(linkElem);
 
     const linkImgContainerElem = document.createElement('span');
     linkImgContainerElem.className = 'bookmark-image-container';
+    linkElem.appendChild(linkImgContainerElem);
 
     const linkTitleContainer = document.createElement('span');
     linkTitleContainer.className = 'bookmark-title-container';
     linkTitleContainer.innerText = bookmark.title;
-
-    linkElem.appendChild(linkImgContainerElem);
     linkElem.appendChild(linkTitleContainer);
 
-    folderElem.appendChild(linkElem);
+    const editElem = document.createElement('button');
+    editElem.className = 'bookmark-edit';
+    editElem.classList.add('bi-three-dots');
+    editElem.classList.add('button-reset');
+    linkContainerElem.appendChild(editElem);
 
-    if (addimage) {
-        addImageToDom(bookmark);
-    }
+
+    addImageToDom(bookmark);
 }
 
 // if image is stored in local storage, add image to DOM bookmark
@@ -237,14 +244,14 @@ async function addImageToDom(bookmark) {
     const storageItem = await getFromStorage(bookmark.id);
 
     if (storageItem) {
-        const imgElem = document.createElement('img');
+        const imgElem = document.createElement('span');
+        imgElem.style.backgroundImage = `url('${storageItem.image}')`;
+        imgElem.classList = 'bookmark-image';
 
-        linkImgContainerElem.classList.remove('fill');
-        imgElem.src = storageItem.image;
-        imgElem.class = 'bookmark-image';
+        linkImgContainerElem.classList.remove('bi-star-fill');
         linkImgContainerElem.appendChild(imgElem);
     } else {
-        linkImgContainerElem.classList.add('fill');
+        linkImgContainerElem.classList.add('bi-star-fill');
     }
 }
 /*
@@ -323,7 +330,6 @@ async function initBookmarks() {
             o.parentId = e.parentId;
             return o;
         });
-
     } catch (error) {
         console.error(error);
     }
@@ -334,13 +340,11 @@ async function init() {
 
     buildNavigation();
 
-    buildNavigation();
-
     bookmarks.forEach((folder, index) => {
         addFolderToDOM(folder);
 
         folder.children.forEach((bookmark) => {
-            addBookmarkToDOM(bookmark, folder, true);
+            addBookmarkToDOM(bookmark, folder);
         });
     });
 }

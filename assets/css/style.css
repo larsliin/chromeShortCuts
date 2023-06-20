@@ -1,3 +1,17 @@
+.button-reset {
+    background: none repeat scroll 0 0 transparent;
+    border: medium none;
+    border-spacing: 0;
+    font-family: "PT Sans Narrow", sans-serif;
+    font-weight: normal;
+    list-style: none outside none;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    text-decoration: none;
+    text-indent: 0;
+}
+
 body {
     margin: 0;
 }
@@ -34,6 +48,7 @@ body {
     height: 100%;
     align-items: center;
     padding-left: 20px;
+    background-color: #fff;
 }
 
 .toolbar::after {
@@ -56,6 +71,7 @@ body {
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    background-color: #f0f0f0;
 }
 
 .folders-container {
@@ -84,26 +100,48 @@ FOLDERS
 /*
 BOOKMARKS
 */
-
 .bookmark {
-    margin: 20px;
     display: inline-block;
+    padding: 25px 15px 0;
     position: relative;
-    text-align: center;
 }
 
-.bookmark span {
-    display: block;
+.bookmark-link {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
 }
 
 .bookmark-image-container {
-    width: 150px;
-    height: 100px;
+    align-items: center;
+    background-color: #fff;
     border-radius: 10px;
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.1);
+    color: #f6a001;
+    display: flex;
+    font-size: 50px;
+    height: 85px;
+    justify-content: center;
+    padding: 0px;
+    transition: all 0.05s;
+    width: 85px;
 }
 
-.bookmark-image-container.fill {
-    background-color: #4f709c;
+.bookmark:hover .bookmark-image-container {
+    /* transform: perspective(400px) rotateY(35deg); */
+    transform: perspective(400px) rotateY(20deg) scale(1.05);
+    box-shadow: 3px 0 3px 3px rgba(0, 0, 0, 0.08);
+}
+
+.bookmark-image {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    display: block;
+    height: 100%;
+    margin: 7px;
+    width: 100%;
 }
 
 .bookmark-title-container {
@@ -111,8 +149,22 @@ BOOKMARKS
     padding-bottom: 10px;
 }
 
-.bookmark-image-container > img {
-    height: 100%;
+.bookmark-edit {
+    position: absolute;
+    top: 0px;
+    right: 15px;
+    font-size: 18px;
+    display: none;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.bookmark-edit:hover {
+    color: #000;
+}
+
+.bookmark:hover .bookmark-edit {
+    display: block;
 }
 
 /*

@@ -46,7 +46,7 @@ async function getBookmarksInFolder(folderId) {
     });
 }
 
-async function getById(id) {
+async function getBookmarkById(id) {
     return new Promise((resolve, reject) => {
         chrome.bookmarks.get(id, (event) => {
             resolve(event);
@@ -54,9 +54,9 @@ async function getById(id) {
     });
 }
 
-async function setLocalStorage(payload) {
+async function setLocalStorage(item) {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.set(payload).then(() => {
+        chrome.storage.local.set(item).then(() => {
             resolve();
         });
     });
