@@ -8,11 +8,11 @@ const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const addBookmark = document.getElementById('add_bookmark');
 const foldersContainer = document.getElementById('folders_container');
+const navContainer = document.getElementById('navigation_container');
 const rootFolderName = 'Shortcutters';
 const rootFolderKey = '_root';
 let image;
 let rootFolderId;
-let addingBookmark = false;
 
 btnAddBookmark.addEventListener('click', onAddBookMarkOpen);
 btnSubmit.addEventListener('click', onCreateBookmarkClick);
@@ -148,14 +148,24 @@ async function onBrowserBookmarkCreated(event) {
         slide(folder.id);
     } else {
         // folder added
-        const folder = bookmarks.find(e => e.id === item.id);
-        if (!document.getElementById(`folder_${folder.id}`)) {
-            addFolderToDOM(folder);
+        if (bookmarks.length) {
+            const folder = bookmarks.find(e => e.id === item.id);
+            if (!document.getElementById(`folder_${folder.id}`)) {
+                addFolderToDOM(folder);
+            }
         }
     }
 }
 
 async function onBrowserBookmarkRemoved(event) {
+    const isRootFolder = event === rootFolderId;
+
+    if (isRootFolder) {
+        resetAll();
+        return;
+    }
+
+
     const folder = bookmarks.find(e => e.id === event);
     if (folder) {
         const elem = document.getElementById(`folder_${folder.id}`);
@@ -167,6 +177,7 @@ async function onBrowserBookmarkRemoved(event) {
 
     } else {
         const folder = bookmarks.find(e => e.children.find(a => a.id === event));
+
         const bookmark = folder.children.find(e => e.id === event);
         const elem = document.getElementById(`bookmark_${bookmark.id}`);
 
@@ -181,6 +192,16 @@ async function onBrowserBookmarkRemoved(event) {
             }));
         }
     }
+}
+
+function resetAll() {
+    bookmarks = [];
+    foldersContainer.innerHTML = '';
+    navContainer.innerHTML = '';
+
+    foldersContainer.style.transform = ``;
+
+    rootFolderId = null;
 }
 
 /*
@@ -258,7 +279,6 @@ async function addImageToDom(bookmark) {
  */
 // render navigation
 function buildNavigation() {
-    const navContainer = document.getElementById('navigation_container');
     navContainer.innerHTML = '';
 
     if (bookmarks.length > 1) {
@@ -285,11 +305,14 @@ function onNavClick(event) {
 }
 
 function removeNavDot(id) {
-    document.getElementById(`nav_${id}`).remove();
+    const elem = document.getElementById(`nav_${id}`);
+    if (elem) {
+        document.getElementById(`nav_${id}`).remove();
+    }
 
     const currentIndex = bookmarks.findIndex(e => e.id === id);
 
-    if (currentIndex === bookmarks.length - 1) {
+    if (bookmarks > 0 && currentIndex === bookmarks.length - 1) {
         slide(bookmarks[bookmarks.length - 2].id);
     }
 }
@@ -314,6 +337,9 @@ function setActiveNav(item) {
         navItem.classList.remove('active');
     }
 
+    if (!item) {
+        return;
+    }
     item.classList.add('active');
 }
 
