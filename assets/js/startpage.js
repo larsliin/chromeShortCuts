@@ -56,8 +56,6 @@ async function onCreateBookmarkClick() {
     const bookmarkUrl = inpUrl.value;
 
     await createBookmark({ folderName, bookmarkTitle, bookmarkUrl });
-
-    slide(bookmarks.find(e => e.name === folderName).id);
 }
 
 async function getBase64Data(file) {
@@ -139,10 +137,15 @@ async function onBrowserBookmarkCreated(event) {
     const response = await getBookmarkById(event);
     const item = response[0];
 
+    buildNavigation();
+
     if (item.url) {
         // bookmark added
         const folder = bookmarks.find(e => e.id === item.parentId);
+        const index = bookmarks.findIndex(e => e.id === item.parentId);
         addBookmarkToDOM(item, folder);
+
+        slide(folder.id);
     } else {
         // folder added
         const folder = bookmarks.find(e => e.id === item.id);
@@ -150,12 +153,9 @@ async function onBrowserBookmarkCreated(event) {
             addFolderToDOM(folder);
         }
     }
-
-    buildNavigation();
 }
 
 async function onBrowserBookmarkRemoved(event) {
-    // debugger;
     const folder = bookmarks.find(e => e.id === event);
     if (folder) {
         const elem = document.getElementById(`folder_${folder.id}`);
@@ -225,7 +225,6 @@ async function addBookmarkToDOM(bookmark, folder) {
     editElem.classList.add('button-reset');
     linkContainerElem.appendChild(editElem);
 
-
     addImageToDom(bookmark);
 }
 
@@ -281,6 +280,7 @@ function buildNavigation() {
 // navtigation click handler
 function onNavClick(event) {
     const folderId = event.currentTarget.id.split('_')[1];
+
     slide(folderId);
 }
 
@@ -304,6 +304,17 @@ function slide(folderid) {
     } else {
         foldersContainer.style.transform = ``;
     }
+
+    setActiveNav(document.querySelectorAll('.navigation-item')[index])
+}
+
+function setActiveNav(item) {
+    const navItem = document.querySelector('.navigation-item.active');
+    if (navItem) {
+        navItem.classList.remove('active');
+    }
+
+    item.classList.add('active');
 }
 
 /**
@@ -347,6 +358,8 @@ async function init() {
             addBookmarkToDOM(bookmark, folder);
         });
     });
+
+    setActiveNav(document.querySelectorAll('.navigation-item')[0]);
 }
 
 init();

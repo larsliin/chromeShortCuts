@@ -1,7 +1,7 @@
 .button-reset {
     background: none repeat scroll 0 0 transparent;
-    border: medium none;
     border-spacing: 0;
+    border: medium none;
     font-family: "PT Sans Narrow", sans-serif;
     font-weight: normal;
     list-style: none outside none;
@@ -44,26 +44,26 @@ body {
 }
 
 .toolbar-inner {
+    align-items: center;
+    background-color: #fff;
     display: flex;
     height: 100%;
-    align-items: center;
     padding-left: 20px;
-    background-color: #fff;
 }
 
 .toolbar::after {
-    position: absolute;
-    content: "";
-    display: block;
-    height: 10px;
-    width: 100vw;
-    background: rgb(0, 0, 0);
     background: linear-gradient(
         180deg,
         rgba(0, 0, 0, 0.1) 0%,
         rgba(0, 0, 0, 0) 100%
     );
+    background: rgb(0, 0, 0);
     bottom: -10px;
+    content: "";
+    display: block;
+    height: 10px;
+    position: absolute;
+    width: 100vw;
 }
 
 .folders-outer {
@@ -130,7 +130,6 @@ BOOKMARKS
 }
 
 .bookmark:hover .bookmark-image-container {
-    /* transform: perspective(400px) rotateY(35deg); */
     transform: perspective(400px) rotateY(20deg) scale(1.05);
     box-shadow: 2px 0 5px 3px rgba(0, 0, 0, 0.08);
 }
@@ -146,22 +145,22 @@ BOOKMARKS
 }
 
 .bookmark-title-container {
-    padding-top: 10px;
-    padding-bottom: 10px;
+    max-width: 100%;
     overflow: hidden;
+    padding-bottom: 10px;
+    padding-top: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 100%;
 }
 
 .bookmark-edit {
-    position: absolute;
-    top: 0px;
-    right: 30px;
-    font-size: 18px;
-    display: none;
     color: #aaa;
     cursor: pointer;
+    display: none;
+    font-size: 18px;
+    position: absolute;
+    right: 30px;
+    top: 0px;
 }
 
 .bookmark-edit:hover {
@@ -188,20 +187,26 @@ NAVIGATION
     padding: 20px 0;
 }
 
-.navigation-item-inner {
-    background-color: #ccc;
-    border-radius: 50%;
-    height: 10px;
-    margin: 5px;
-    width: 10px;
-}
-
 .navigation-item {
     background: none repeat scroll 0 0 transparent;
+    border-radius: 50%;
     border-spacing: 0;
-    border: none;
+    border: 2px solid transparent;
     cursor: pointer;
     line-height: 0;
     margin: 5px;
     padding: 0;
+}
+
+.navigation-item.active {
+    border-color: #6200ee;
+    border-radius: 50%;
+}
+
+.navigation-item-inner {
+    background-color: #6200ee;
+    border-radius: 50%;
+    height: 10px;
+    margin: 3px;
+    width: 10px;
 }
