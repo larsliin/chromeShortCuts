@@ -12,6 +12,18 @@
     text-indent: 0;
 }
 
+.field-group.field-group-file-text {
+    margin-bottom: 5px;
+}
+
+.field-group.field-group-file-btn {
+    margin-top: 5px;
+}
+
+/*
+*
+*/
+
 body {
     margin: 0;
 }
@@ -40,7 +52,7 @@ body {
     position: fixed;
     top: 0;
     width: 100vw;
-    z-index: 10;
+    z-index: 5;
 }
 
 .toolbar-inner {
@@ -90,11 +102,18 @@ FOLDERS
 .folder {
     display: inline-flex;
     height: 100vh;
-    flex-wrap: wrap;
-    width: 100vw;
     align-content: center;
     justify-content: center;
     flex: 0 0 100%;
+}
+
+.folder-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    max-width: 1024px;
+    width: 100%;
 }
 
 /*
@@ -118,7 +137,7 @@ BOOKMARKS
     align-items: center;
     background-color: #fff;
     border-radius: 10px;
-    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0 20px 0px rgba(0, 0, 0, 0.15);
     color: #f6a001;
     display: flex;
     font-size: 50px;
@@ -127,11 +146,13 @@ BOOKMARKS
     padding: 0px;
     transition: all 0.05s;
     width: 85px;
+    transform-origin: center center;
 }
 
 .bookmark:hover .bookmark-image-container {
-    transform: perspective(400px) rotateY(20deg) scale(1.05);
-    box-shadow: 2px 0 5px 3px rgba(0, 0, 0, 0.08);
+    /* transform: perspective(400px) rotateY(20deg) scale(1.05); */
+    transform: perspective(400px) rotateY(15deg) scale(1.05);
+    box-shadow: 0px 0 25px 0px rgba(0, 0, 0, 0.15);
 }
 
 .bookmark-image {

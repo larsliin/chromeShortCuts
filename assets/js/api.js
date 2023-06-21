@@ -28,6 +28,22 @@ async function createBookmarkInFolder(parentId, bookmarkTitle, bookmarkUrl) {
     });
 }
 
+async function updateBookmark(id, data) {
+    return new Promise((resolve) => {
+        chrome.bookmarks.update(
+            id,
+            {
+                title: data.title,
+                url: data.url,
+            },
+            (bookmark) => {
+                resolve(bookmark);
+            }
+        );
+    });
+}
+
+
 // return all bookmarks in folder
 // add type to make distinguishing between bookmarks and folders easier
 async function getBookmarksInFolder(folderId) {

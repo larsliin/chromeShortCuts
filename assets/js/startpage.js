@@ -13,6 +13,7 @@ const rootFolderName = 'Shortcutters';
 const rootFolderKey = '_root';
 let image;
 let rootFolderId;
+let editBookmarkId;
 
 btnAddBookmark.addEventListener('click', onAddBookMarkOpen);
 btnSubmit.addEventListener('click', onCreateBookmarkClick);
@@ -51,11 +52,16 @@ function onAddFile(event) {
 }
 
 async function onCreateBookmarkClick() {
-    const folderName = inpFolder.value;
-    const bookmarkTitle = inpTitle.value;
-    const bookmarkUrl = inpUrl.value;
+    const folder = inpFolder.value;
+    const title = inpTitle.value;
+    const url = inpUrl.value;
 
-    await createBookmark({ folderName, bookmarkTitle, bookmarkUrl });
+    if (editBookmarkId) {
+        await editBookmark(editBookmarkId, { folder, title, url });
+        editBookmarkId = null;
+    } else {
+        await createBookmark({ folder, title, url });
+    }
 }
 
 async function getBase64Data(file) {
@@ -66,6 +72,41 @@ async function getBase64Data(file) {
         console.error(error);
         throw error;
     }
+}
+
+/**
+ * EDIT BOOKMARK
+ */
+async function editBookmark(id, data) {
+    bookmarks.find(obj => {
+        if (Array.isArray(obj.children)) {
+            const foundObject = obj.children.find(child => child.id === id);
+            if (foundObject) {
+                foundObject.folder = data.folder;
+                foundObject.title = data.title;
+                foundObject.url = data.url;
+                return true;
+            }
+        }
+        return false;
+    });
+
+    await updateBookmark(id, data);
+    await updateImage(id);
+
+    dialog.close();
+}
+
+async function updateImage(id) {
+    if (!image) {
+        return;
+    }
+
+    const base64 = await getBase64Data(image);
+    await setLocalStorage({ [id]: { image: base64 } });
+    image = null;
+    // addImageToDom(bookmark);
+
 }
 
 /**
@@ -90,7 +131,7 @@ async function createBookmark(o) {
         }
 
         // create subfolder
-        const folderName = o.folderName ? o.folderName : '_root';
+        const folderName = o.folder ? o.folder : '_root';
         const existingFolder = await searchBookmarkFolder(folderName);
 
         if (existingFolder.length === 0) {
@@ -112,24 +153,21 @@ async function createBookmark(o) {
 
         // if bookmark title then create bookmark in folder
         let bookmark;
-        if (o.bookmarkTitle && o.bookmarkTitle !== '') {
-            bookmark = await createBookmarkInFolder(subFolderId, o.bookmarkTitle, o.bookmarkUrl);
+        if (o.title && o.title !== '') {
+            bookmark = await createBookmarkInFolder(subFolderId, o.title, o.url);
             if (image) {
-                const base64 = await getBase64Data(image);
-                await setLocalStorage({ [bookmark.id]: { image: base64 } });
+                await updateImage(bookmark.id);
                 addImageToDom(bookmark);
             }
 
             const bookmarksFolder = bookmarks.find(e => e.id === bookmark.parentId);
             bookmarksFolder.children.push(bookmark);
         }
-
         dialog.close();
 
         resolve({ folder, bookmark });
     });
 }
-
 /**
  * CHROME BOOKMARK CREATED HANDLER
  */
@@ -164,7 +202,6 @@ async function onBrowserBookmarkRemoved(event) {
         resetAll();
         return;
     }
-
 
     const folder = bookmarks.find(e => e.id === event);
     if (folder) {
@@ -210,21 +247,25 @@ function resetAll() {
 // add bookmarks folder container to DOM
 function addFolderToDOM(folder) {
     const container = document.createElement('div');
+    const containerInner = document.createElement('div');
     container.className = 'folder';
+    containerInner.className = 'folder-inner';
     container.id = `folder_${folder.id}`;
     container.setAttribute('_name', folder.name);
     container.setAttribute('_folder', folder.id);
     foldersContainer.appendChild(container);
+    container.appendChild(containerInner);
 }
 
 // add bookmark to DOM in container
 async function addBookmarkToDOM(bookmark, folder) {
     const folderElem = document.getElementById(`folder_${folder.id}`);
+    const folderInnerElem = folderElem.querySelector(`.folder-inner`);
 
     const linkContainerElem = document.createElement('span');
     linkContainerElem.className = 'bookmark';
     linkContainerElem.id = `bookmark_${bookmark.id}`;
-    folderElem.appendChild(linkContainerElem);
+    folderInnerElem.appendChild(linkContainerElem);
 
     const linkElem = document.createElement('a');
     linkElem.href = bookmark.url;
@@ -242,11 +283,39 @@ async function addBookmarkToDOM(bookmark, folder) {
 
     const editElem = document.createElement('button');
     editElem.className = 'bookmark-edit';
+    editElem.id = `edit_${bookmark.id}`;
     editElem.classList.add('bi-three-dots');
     editElem.classList.add('button-reset');
+    editElem.addEventListener('click', onEditClick);
     linkContainerElem.appendChild(editElem);
 
     addImageToDom(bookmark);
+}
+
+function onEditClick(event) {
+    const bookmarkId = event.currentTarget.id.split('_')[1];
+
+    const folder = bookmarks.find(e => e.children.find(child => child.id === bookmarkId));
+    const bookmark = folder.children.find(e => e.id === bookmarkId);
+    editBookmarkId = bookmark.id;
+
+    dialog.open();
+
+    if (folder.name !== rootFolderKey) {
+        inpFolder.value = folder.name;
+        inpFolder.focus();
+        inpFolder.blur();
+    }
+    if (bookmark.title) {
+        inpTitle.value = bookmark.title;
+        inpTitle.focus();
+        inpTitle.blur();
+    }
+    if (bookmark.url) {
+        inpUrl.value = bookmark.url;
+        inpUrl.focus();
+        inpUrl.blur();
+    }
 }
 
 // if image is stored in local storage, add image to DOM bookmark
