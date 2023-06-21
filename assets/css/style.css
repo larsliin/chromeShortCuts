@@ -104,6 +104,7 @@ BOOKMARKS
     display: inline-block;
     padding: 25px 15px 0;
     position: relative;
+    width: 115px;
 }
 
 .bookmark-link {
@@ -131,7 +132,7 @@ BOOKMARKS
 .bookmark:hover .bookmark-image-container {
     /* transform: perspective(400px) rotateY(35deg); */
     transform: perspective(400px) rotateY(20deg) scale(1.05);
-    box-shadow: 3px 0 3px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: 2px 0 5px 3px rgba(0, 0, 0, 0.08);
 }
 
 .bookmark-image {
@@ -147,12 +148,16 @@ BOOKMARKS
 .bookmark-title-container {
     padding-top: 10px;
     padding-bottom: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .bookmark-edit {
     position: absolute;
     top: 0px;
-    right: 15px;
+    right: 30px;
     font-size: 18px;
     display: none;
     color: #aaa;
