@@ -15,7 +15,7 @@ let image;
 let rootFolderId;
 let editBookmarkId;
 
-btnAddBookmark.addEventListener('click', onAddBookMarkOpen);
+btnAddBookmark.addEventListener('click', openEditBookmark);
 btnSubmit.addEventListener('click', onCreateBookmarkClick);
 inpFolder.addEventListener('keydown', onInpKeyDown);
 inpTitle.addEventListener('keydown', onInpKeyDown);
@@ -35,7 +35,11 @@ textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
 });
 
-function onAddBookMarkOpen() {
+function openEditBookmark() {
+    const submitBtnText = editBookmarkId ? 'Update Bookmark' : 'Create Bookmark';
+    btnSubmit.value = submitBtnText;
+    btnSubmit.querySelector('.mdc-button__label').innerText = submitBtnText;
+
     dialog.open();
 }
 
@@ -299,7 +303,7 @@ function onEditClick(event) {
     const bookmark = folder.children.find(e => e.id === bookmarkId);
     editBookmarkId = bookmark.id;
 
-    dialog.open();
+    openEditBookmark();
 
     if (folder.name !== rootFolderKey) {
         inpFolder.value = folder.name;
