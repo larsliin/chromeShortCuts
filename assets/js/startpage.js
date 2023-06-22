@@ -6,7 +6,6 @@ const inpUrl = document.getElementById('inp_url');
 const inpFile = document.getElementById('inp_file');
 const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
-const addBookmark = document.getElementById('add_bookmark');
 const foldersContainer = document.getElementById('folders_container');
 const navContainer = document.getElementById('navigation_container');
 const rootFolderName = 'Shortcutters';
