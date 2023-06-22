@@ -156,12 +156,12 @@ BOOKMARKS
     color: #f6a001;
     display: flex;
     font-size: 50px;
-    height: 85px;
+    height: 70px;
     justify-content: center;
-    padding: 0px;
     transition: all 0.05s;
-    width: 85px;
+    width: 70px;
     transform-origin: center right;
+    padding: 10px;
 }
 
 .bookmark:hover .bookmark-image-container {
@@ -180,7 +180,6 @@ BOOKMARKS
     background-size: contain;
     display: block;
     height: 100%;
-    margin: 7px;
     width: 100%;
 }
 
