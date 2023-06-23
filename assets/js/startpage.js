@@ -13,6 +13,9 @@ const rootFolderKey = '_root';
 let image;
 let rootFolderId;
 let editBookmarkId;
+let sliderTimeout;
+let currentSlideIndex = 0;
+const goToOpenedLast = true;
 
 btnAddBookmark.addEventListener('click', openEditBookmark);
 btnSubmit.addEventListener('click', onCreateBookmarkClick);
@@ -400,7 +403,14 @@ function slide(folderid) {
         foldersContainer.style.transform = ``;
     }
 
-    setActiveNav(document.querySelectorAll('.navigation-item')[index])
+    setActiveNav(document.querySelectorAll('.navigation-item')[index]);
+
+    if (sliderTimeout) {
+        clearTimeout(sliderTimeout);
+        sliderTimeout = null;
+    }
+
+    currentSlideIndex = index;
 }
 
 function setActiveNav(item) {
@@ -415,6 +425,9 @@ function setActiveNav(item) {
     item.classList.add('active');
 }
 
+function onSlideEnd() {
+    setLocalStorage({ sliderIndex: currentSlideIndex });
+}
 /**
  * INITIAL
  */
@@ -444,10 +457,35 @@ async function initBookmarks() {
     }
 }
 
+async function goToSlide() {
+    if (goToOpenedLast) {
+
+        let folderIndex = await getFromStorage('sliderIndex');
+
+        if (folderIndex) {
+            currentSlideIndex = bookmarks[folderIndex]?.id;
+
+            slide(currentSlideIndex);
+        }
+    } else {
+        setLocalStorage({ sliderIndex: 0 });
+    }
+
+    setTimeout(() => {
+        foldersContainer.classList.add('animated');
+        foldersContainer.classList.add('d-flex');
+    }, 0);
+
+    setActiveNav(document.querySelectorAll('.navigation-item')[currentSlideIndex]);
+}
+
 async function init() {
     await initBookmarks();
 
     buildNavigation();
+
+    await goToSlide();
+
 
     bookmarks.forEach((folder, index) => {
         addFolderToDOM(folder);
@@ -457,7 +495,7 @@ async function init() {
         });
     });
 
-    setActiveNav(document.querySelectorAll('.navigation-item')[0]);
+    foldersContainer.addEventListener('transitionend', onSlideEnd);
 }
 
 init();
