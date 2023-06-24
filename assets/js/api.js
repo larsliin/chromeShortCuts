@@ -1,12 +1,3 @@
-// search for bookmark folder by name to check if a specific folder already exists before creating new folder
-async function searchBookmarkFolder(folderName) {
-    return new Promise((resolve) => {
-        chrome.bookmarks.search({ title: folderName }, (results) => {
-            resolve(results);
-        });
-    });
-}
-
 // create bookmark folder
 async function createBookmarkFolder(parentId, folderName) {
     return new Promise((resolve) => {
@@ -93,4 +84,32 @@ async function toBase64(file) {
         reader.onload = () => resolve(reader.result);
         reader.onerror = reject;
     });
+}
+
+// search for bookmark folder by name to check if a specific folder already exists before creating new folder
+async function searchBookmarkFolder2(parentFolderId, folderName) {
+    return new Promise((resolve, reject) => {
+        console.log(parentFolderId);
+
+        chrome.bookmarks.getSubTree(parentFolderId, function (result) {
+            const bookmarkTreeNodes = result[0].children;
+            const folder = searchFolder(bookmarkTreeNodes, folderName);
+            const folderResult = folder ? [folder] : [];
+            resolve(folderResult);
+        });
+    });
+}
+
+function searchFolder(bookmarkTreeNodes, folderName) {
+    for (let node of bookmarkTreeNodes) {
+        if (node.title === folderName && node.children) {
+            return node;
+        }
+        if (node.children) {
+            const result = searchFolder(node.children, folderName);
+            if (result) {
+                return result;
+            }
+        }
+    }
 }

@@ -31,10 +31,30 @@ chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
  * ADD-BOOKMARK MODAL
  */
 
-const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmar'));
+const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmark'));
 const textFields = document.querySelectorAll('.mdc-text-field');
+
 textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
+});
+
+inpTitle.value = Date.now();
+
+dialog.listen('MDCDialog:closed', () => {
+    inpFolder.value = '';
+    inpTitle.value = Date.now();
+    inpUrl.value = 'http://123.com';
+});
+
+dialog.listen('MDCDialog:opened', () => {
+    inpFolder.focus();
+    inpFolder.blur();
+
+    inpTitle.focus();
+    inpTitle.blur();
+
+    inpUrl.focus();
+    inpUrl.blur();
 });
 
 function openEditBookmark() {
@@ -63,7 +83,8 @@ async function onCreateBookmarkClick() {
     const url = inpUrl.value;
 
     if (editBookmarkId) {
-        await editBookmark(editBookmarkId, { folder, title, url });
+        const parentId = folder === '' ? rootFolderKey : folder;
+        await editBookmark(editBookmarkId, { parentId, title, url });
         editBookmarkId = null;
     } else {
         await createBookmark({ folder, title, url });
@@ -84,13 +105,15 @@ async function getBase64Data(file) {
  * EDIT BOOKMARK
  */
 async function editBookmark(id, data) {
+    let bookmark;
+    const { parentId, title, url } = data;
     bookmarks.find(obj => {
         if (Array.isArray(obj.children)) {
-            const foundObject = obj.children.find(child => child.id === id);
-            if (foundObject) {
-                foundObject.folder = data.folder;
-                foundObject.title = data.title;
-                foundObject.url = data.url;
+            bookmark = obj.children.find(child => child.id === id);
+            if (bookmark) {
+                bookmark.parentId = parentId;
+                bookmark.title = title;
+                bookmark.url = url;
                 return true;
             }
         }
@@ -99,6 +122,8 @@ async function editBookmark(id, data) {
 
     await updateBookmark(id, data);
     await updateImage(id);
+
+    updateBookmarkDOM({ parentId, id, title, url });
 
     dialog.close();
 }
@@ -115,12 +140,25 @@ async function updateImage(id) {
 
 }
 
+async function updateBookmarkDOM(bookmark) {
+    const bookmarkElem = document.getElementById(`bookmark_${bookmark.id}`);
+    const imgElem = bookmarkElem.querySelector('.bookmark-image');
+
+    bookmarkElem.querySelector('.bookmark-title-container').innerText = bookmark.title;
+    bookmarkElem.querySelector('a').href = bookmark.url;
+    if (imgElem) {
+        const storageItem = await getFromStorage(bookmark.id);
+
+        imgElem.style.backgroundImage = `url('${storageItem.image}')`;
+    }
+}
+
 /**
  * CREATE BOOKMARK AND FOLDER
  */
 async function createBookmark(o) {
     return new Promise(async (resolve, reject) => {
-        const existingRootFolder = await searchBookmarkFolder(rootFolderName);
+        const existingRootFolder = await searchBookmarkFolder2('2', rootFolderName);
         let subFolderId;
         let folder;
         if (!rootFolderId) {
@@ -138,7 +176,7 @@ async function createBookmark(o) {
 
         // create subfolder
         const folderName = o.folder ? o.folder : '_root';
-        const existingFolder = await searchBookmarkFolder(folderName);
+        const existingFolder = await searchBookmarkFolder2(rootFolderId.toString(), folderName);
 
         if (existingFolder.length === 0) {
             // create bookmark folder if folder does not already exist
@@ -245,6 +283,8 @@ function resetAll() {
     foldersContainer.style.transform = ``;
 
     rootFolderId = null;
+    currentSlideIndex = 0
+    setLocalStorage({ sliderIndex: currentSlideIndex });
 }
 
 /*
@@ -435,7 +475,7 @@ function onSlideEnd() {
 async function initBookmarks() {
     try {
         // get root bookmarks folder
-        const rootFolder = await searchBookmarkFolder(rootFolderName);
+        const rootFolder = await searchBookmarkFolder2('2', rootFolderName);
 
         // if no bookmarks do not continue
         if (!rootFolder.length) {
@@ -461,7 +501,9 @@ async function goToSlide() {
     if (goToOpenedLast) {
 
         let folderIndex = await getFromStorage('sliderIndex');
-
+        if (folderIndex > bookmarks.length) {
+            folderIndex = bookmarks.length - 1;
+        }
         if (folderIndex) {
             currentSlideIndex = bookmarks[folderIndex]?.id;
 
@@ -487,7 +529,7 @@ async function init() {
     await goToSlide();
 
 
-    bookmarks.forEach((folder, index) => {
+    bookmarks.forEach((folder) => {
         addFolderToDOM(folder);
 
         folder.children.forEach((bookmark) => {
