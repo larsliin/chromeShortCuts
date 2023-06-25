@@ -89,8 +89,6 @@ async function toBase64(file) {
 // search for bookmark folder by name to check if a specific folder already exists before creating new folder
 async function searchBookmarkFolder2(parentFolderId, folderName) {
     return new Promise((resolve, reject) => {
-        console.log(parentFolderId);
-
         chrome.bookmarks.getSubTree(parentFolderId, function (result) {
             const bookmarkTreeNodes = result[0].children;
             const folder = searchFolder(bookmarkTreeNodes, folderName);

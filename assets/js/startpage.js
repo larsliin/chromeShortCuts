@@ -38,12 +38,13 @@ textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
 });
 
-inpTitle.value = Date.now();
+// inpTitle.value = Date.now();
 
 dialog.listen('MDCDialog:closed', () => {
     inpFolder.value = '';
-    inpTitle.value = Date.now();
-    inpUrl.value = 'http://123.com';
+    inpTitle.value = ''; // Date.now();
+    inpUrl.value = '';  // 'http://123.com';
+    inpFile.value = '';
 });
 
 dialog.listen('MDCDialog:opened', () => {
@@ -136,21 +137,22 @@ async function updateImage(id) {
     const base64 = await getBase64Data(image);
     await setLocalStorage({ [id]: { image: base64 } });
     image = null;
-    // addImageToDom(bookmark);
 
 }
 
 async function updateBookmarkDOM(bookmark) {
     const bookmarkElem = document.getElementById(`bookmark_${bookmark.id}`);
     const imgElem = bookmarkElem.querySelector('.bookmark-image');
-
     bookmarkElem.querySelector('.bookmark-title-container').innerText = bookmark.title;
     bookmarkElem.querySelector('a').href = bookmark.url;
     if (imgElem) {
         const storageItem = await getFromStorage(bookmark.id);
 
         imgElem.style.backgroundImage = `url('${storageItem.image}')`;
+    } else {
+        addImageToDom(bookmark);
     }
+    // debugger;
 }
 
 /**
