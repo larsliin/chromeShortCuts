@@ -1,4 +1,5 @@
 let bookmarks = [];
+const btnSettings = document.getElementById('btn_settings');
 const btnAddBookmark = document.getElementById('btn_add_bookmark');
 const inpFolder = document.getElementById('inp_folder');
 const inpTitle = document.getElementById('inp_title');
@@ -17,6 +18,7 @@ let sliderTimeout;
 let currentSlideIndex = 0;
 const goToOpenedLast = true;
 
+btnSettings.addEventListener('click', openSettings);
 btnAddBookmark.addEventListener('click', openEditBookmark);
 btnSubmit.addEventListener('click', onCreateBookmarkClick);
 inpFolder.addEventListener('keydown', onInpKeyDown);
@@ -31,12 +33,17 @@ chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
  * ADD-BOOKMARK MODAL
  */
 
+const dialogSettings = new mdc.dialog.MDCDialog(document.getElementById('dialog_settings'));
 const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmark'));
 const textFields = document.querySelectorAll('.mdc-text-field');
 
 textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
 });
+
+function openSettings() {
+    dialogSettings.open();
+}
 
 // inpTitle.value = Date.now();
 
