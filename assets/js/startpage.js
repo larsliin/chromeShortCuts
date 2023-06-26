@@ -2,6 +2,7 @@ let bookmarks = [];
 const btnSettings = document.getElementById('btn_settings');
 const btnAddBookmark = document.getElementById('btn_add_bookmark');
 const inpFolder = document.getElementById('inp_folder');
+const inpSelectFolder = document.getElementById('inp_select_folder');
 const inpTitle = document.getElementById('inp_title');
 const inpUrl = document.getElementById('inp_url');
 const inpFile = document.getElementById('inp_file');
@@ -17,6 +18,7 @@ let editBookmarkId;
 let sliderTimeout;
 let currentSlideIndex = 0;
 const goToOpenedLast = true;
+let folderStr;
 
 btnSettings.addEventListener('click', openSettings);
 btnAddBookmark.addEventListener('click', openEditBookmark);
@@ -41,17 +43,61 @@ textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
 });
 
+// initialize folder select dropdown
+const mdcSelect = new mdc.select.MDCSelect(document.querySelector('.mdc-select'));
+mdcSelect.listen('MDCSelect:change', () => {
+    folderStr = mdcSelect.value;
+});
+
+
 function openSettings() {
     dialogSettings.open();
 }
 
-// inpTitle.value = Date.now();
+function renderFolderSelect(selectedindex) {
+    const folders = bookmarks.map(e => e.name);
+    const index = selectedindex ? selectedindex : -1;
+    inpSelectFolder.innerHTML = '';
+
+    for (let i = 0; i < folders.length; i++) {
+        const liElem = document.createElement('li');
+        liElem.classList.add('mdc-list-item');
+        liElem.setAttribute('data-value', folders[i]);
+        liElem.role = 'option'
+
+        const rippleElem = document.createElement('span');
+        rippleElem.classList.add('mdc-list-item__ripple')
+        liElem.appendChild(rippleElem);
+
+        const itemElem = document.createElement('span');
+        itemElem.classList.add('mdc-list-item__text');
+        itemElem.innerText = folders[i];
+        liElem.appendChild(itemElem);
+
+        inpSelectFolder.appendChild(liElem);
+    }
+
+    mdcSelect.layoutOptions();
+
+    mdcSelect.setSelectedIndex(index);
+}
+
+inpTitle.value = Date.now();
 
 dialog.listen('MDCDialog:closed', () => {
+    folderStr = null;
     inpFolder.value = '';
-    inpTitle.value = ''; // Date.now();
-    inpUrl.value = '';  // 'http://123.com';
+    inpTitle.value = Date.now();
+    inpUrl.value = 'http://123.com';
     inpFile.value = '';
+
+    editBookmarkId = null;
+
+    document.getElementById('inp_radio_1').checked = true;
+    document.getElementById('fieldgroup_folder_text').classList.remove('d-none');
+    document.getElementById('fieldgroup_folder_select').classList.remove('d-block');
+
+
 });
 
 dialog.listen('MDCDialog:opened', () => {
@@ -65,12 +111,25 @@ dialog.listen('MDCDialog:opened', () => {
     inpUrl.blur();
 });
 
-function openEditBookmark() {
+async function openEditBookmark() {
     const submitBtnText = editBookmarkId ? 'Update Bookmark' : 'Create Bookmark';
     btnSubmit.value = submitBtnText;
     btnSubmit.querySelector('.mdc-button__label').innerText = submitBtnText;
 
+    let folderIndex = -1;
+    if (editBookmarkId) {
+        const bookmark = await getBookmarkById(editBookmarkId);
+        console.log(bookmark);
+        folderIndex = bookmarks.findIndex(e => e.id === bookmark[0].parentId);
+        document.getElementById('inp_radio_2').checked = true;
+        document.getElementById('fieldgroup_folder_text').classList.add('d-none');
+        document.getElementById('fieldgroup_folder_select').classList.add('d-block');
+
+    }
+    mdcSelect.setSelectedIndex(folderIndex);
     dialog.open();
+
+
 }
 
 // add-bookmark input elements event handlers
@@ -81,22 +140,43 @@ function onInpKeyDown(event) {
     }
 }
 
+function onRadioFolderModeChange(event) {
+    if (event.target.id === 'inp_radio_1') {
+        document.getElementById('fieldgroup_folder_text').classList.remove('d-none');
+        document.getElementById('fieldgroup_folder_select').classList.remove('d-block');
+    } else {
+        document.getElementById('fieldgroup_folder_text').classList.add('d-none');
+        document.getElementById('fieldgroup_folder_select').classList.add('d-block');
+    }
+}
+
+document.querySelectorAll("input[name='folderRadioGrp']").forEach((input) => {
+    input.addEventListener('change', onRadioFolderModeChange);
+});
+
+
 function onAddFile(event) {
     image = event.target.files[0];
 }
 
 async function onCreateBookmarkClick() {
-    const folder = inpFolder.value;
+    let folder = inpFolder.value;
+
+    if (document.getElementById('inp_radio_2').checked) {
+        folder = folderStr;
+    }
+
     const title = inpTitle.value;
     const url = inpUrl.value;
 
     if (editBookmarkId) {
         const parentId = folder === '' ? rootFolderKey : folder;
         await editBookmark(editBookmarkId, { parentId, title, url });
-        editBookmarkId = null;
     } else {
         await createBookmark({ folder, title, url });
     }
+
+    renderFolderSelect();
 }
 
 async function getBase64Data(file) {
@@ -184,7 +264,7 @@ async function createBookmark(o) {
         }
 
         // create subfolder
-        const folderName = o.folder ? o.folder : '_root';
+        const folderName = o.folder ? o.folder : rootFolderKey;
         const existingFolder = await searchBookmarkFolder2(rootFolderId.toString(), folderName);
 
         if (existingFolder.length === 0) {
@@ -357,9 +437,9 @@ function onEditClick(event) {
     openEditBookmark();
 
     if (folder.name !== rootFolderKey) {
-        inpFolder.value = folder.name;
-        inpFolder.focus();
-        inpFolder.blur();
+        //inpFolder.value = folder.name;
+        // inpFolder.focus();
+        // inpFolder.blur();
     }
     if (bookmark.title) {
         inpTitle.value = bookmark.title;
@@ -533,10 +613,11 @@ async function goToSlide() {
 async function init() {
     await initBookmarks();
 
+    renderFolderSelect();
+
     buildNavigation();
 
     await goToSlide();
-
 
     bookmarks.forEach((folder) => {
         addFolderToDOM(folder);

@@ -20,6 +20,10 @@
     margin-top: 5px;
 }
 
+.field-group.fieldgroup-select {
+    display: none;
+}
+
 .ml-10 {
     margin-left: 10px !important;
 }
@@ -39,6 +43,15 @@
 .d-flex {
     display: flex !important;
 }
+
+.d-block {
+    display: block !important;
+}
+
+.d-none {
+    display: none !important;
+}
+
 /*
 *
 */
@@ -55,6 +68,10 @@ body {
     display: block;
     font-size: 16px;
     margin: 20px 0;
+}
+
+.mdc-select {
+    width: 100%;
 }
 
 .mdc-text-field {

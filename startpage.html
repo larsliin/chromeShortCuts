@@ -53,6 +53,41 @@
             <div class="mdc-dialog__container">
                 <div class="mdc-dialog__surface">
                     <div class="field-group">
+                        <div class="mdc-form-field">
+                            <div class="mdc-radio">
+                                <input
+                                    class="mdc-radio__native-control"
+                                    type="radio"
+                                    id="inp_radio_1"
+                                    name="folderRadioGrp"
+                                    checked />
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                                <div class="mdc-radio__ripple"></div>
+                            </div>
+                            <label for="inp_radio_1">Create New Folder</label>
+                        </div>
+
+                        <div class="mdc-form-field">
+                            <div class="mdc-radio">
+                                <input
+                                    class="mdc-radio__native-control"
+                                    type="radio"
+                                    id="inp_radio_2"
+                                    name="folderRadioGrp" />
+                                <div class="mdc-radio__background">
+                                    <div class="mdc-radio__outer-circle"></div>
+                                    <div class="mdc-radio__inner-circle"></div>
+                                </div>
+                                <div class="mdc-radio__ripple"></div>
+                            </div>
+                            <label for="inp_radio_2">Use Existing Folder</label>
+                        </div>
+                    </div>
+
+                    <div class="field-group" id="fieldgroup_folder_text">
                         <label class="mdc-text-field mdc-text-field--filled">
                             <span class="mdc-text-field__ripple"></span>
                             <input
@@ -68,6 +103,60 @@
                             </span>
                             <span class="mdc-line-ripple"></span>
                         </label>
+                    </div>
+
+                    <div
+                        class="field-group fieldgroup-select"
+                        id="fieldgroup_folder_select">
+                        <!---->
+                        <div
+                            class="mdc-select mdc-select--filled demo-width-class">
+                            <div
+                                class="mdc-select__anchor"
+                                role="button"
+                                aria-haspopup="listbox"
+                                aria-expanded="false"
+                                aria-labelledby="demo-label demo-selected-text">
+                                <span class="mdc-select__ripple"></span>
+                                <span id="demo-label" class="mdc-floating-label"
+                                    >Select existing folder</span
+                                >
+                                <span
+                                    class="mdc-select__selected-text-container">
+                                    <span
+                                        id="demo-selected-text"
+                                        class="mdc-select__selected-text"></span>
+                                </span>
+                                <span class="mdc-select__dropdown-icon">
+                                    <svg
+                                        class="mdc-select__dropdown-icon-graphic"
+                                        viewBox="7 10 10 5"
+                                        focusable="false">
+                                        <polygon
+                                            class="mdc-select__dropdown-icon-inactive"
+                                            stroke="none"
+                                            fill-rule="evenodd"
+                                            points="7 10 12 15 17 10"></polygon>
+                                        <polygon
+                                            class="mdc-select__dropdown-icon-active"
+                                            stroke="none"
+                                            fill-rule="evenodd"
+                                            points="7 15 12 10 17 15"></polygon>
+                                    </svg>
+                                </span>
+                                <span class="mdc-line-ripple"></span>
+                            </div>
+
+                            <div
+                                class="mdc-select__menu mdc-menu mdc-menu-surface mdc-menu-surface--fullwidth">
+                                <ul
+                                    id="inp_select_folder"
+                                    class="mdc-list"
+                                    role="listbox"
+                                    aria-label="Select existing folder"></ul>
+                            </div>
+                        </div>
+                        <!---->
                     </div>
 
                     <div class="field-group">
@@ -94,7 +183,7 @@
                             <input
                                 type="text"
                                 id="inp_url"
-                                value=""
+                                value="https://123.com"
                                 class="mdc-text-field__input"
                                 aria-labelledby="bookmark-url-label"
                                 name="inp_url" />
