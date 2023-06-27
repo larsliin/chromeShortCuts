@@ -119,7 +119,7 @@ async function openEditBookmark() {
     let folderIndex = -1;
     if (editBookmarkId) {
         const bookmark = await getBookmarkById(editBookmarkId);
-        console.log(bookmark);
+
         folderIndex = bookmarks.findIndex(e => e.id === bookmark[0].parentId);
         document.getElementById('inp_radio_2').checked = true;
         document.getElementById('fieldgroup_folder_text').classList.add('d-none');
@@ -328,27 +328,28 @@ async function onBrowserBookmarkCreated(event) {
     }
 }
 
-async function onBrowserBookmarkRemoved(event) {
-    const isRootFolder = event === rootFolderId;
+async function onBrowserBookmarkRemoved(bookmarkid) {
+    const isRootFolder = bookmarkid === rootFolderId;
 
     if (isRootFolder) {
         resetAll();
         return;
     }
 
-    const folder = bookmarks.find(e => e.id === event);
+    const folder = bookmarks.find(e => e.id === bookmarkid);
+
     if (folder) {
         const elem = document.getElementById(`folder_${folder.id}`);
         elem.remove();
+        console.log(bookmarkid);
+        removeNavDot(bookmarkid);
 
-        removeNavDot(event);
-
-        bookmarks = bookmarks.filter(e => e.id !== event);
+        bookmarks = bookmarks.filter(e => e.id !== bookmarkid);
 
     } else {
-        const folder = bookmarks.find(e => e.children.find(a => a.id === event));
+        const folder = bookmarks.find(e => e.children.find(a => a.id === bookmarkid));
 
-        const bookmark = folder.children.find(e => e.id === event);
+        const bookmark = folder.children.find(e => e.id === bookmarkid);
         const elem = document.getElementById(`bookmark_${bookmark.id}`);
 
         if (elem.parentNode.childNodes.length === 1) {
@@ -358,7 +359,7 @@ async function onBrowserBookmarkRemoved(event) {
 
             bookmarks = bookmarks.map(obj => ({
                 ...obj,
-                children: obj.children.filter(nestedObj => nestedObj.id !== event)
+                children: obj.children.filter(nestedObj => nestedObj.id !== bookmarkid)
             }));
         }
     }
@@ -508,16 +509,19 @@ function onNavClick(event) {
     slide(folderId);
 }
 
-function removeNavDot(id) {
-    const elem = document.getElementById(`nav_${id}`);
+function removeNavDot(bookmarkid) {
+    const elem = document.getElementById(`nav_${bookmarkid}`);
+
     if (elem) {
-        document.getElementById(`nav_${id}`).remove();
+        document.getElementById(`nav_${bookmarkid}`).remove();
     }
 
-    const currentIndex = bookmarks.findIndex(e => e.id === id);
+    const currentIndex = bookmarks.findIndex(e => e.id === bookmarkid);
 
-    if (bookmarks > 0 && currentIndex === bookmarks.length - 1) {
+    if (currentSlideIndex >= bookmarks.length - 1) {
         slide(bookmarks[bookmarks.length - 2].id);
+    } else if (currentIndex < currentSlideIndex) {
+        slide(bookmarks[currentSlideIndex - 1].id);
     }
 }
 
