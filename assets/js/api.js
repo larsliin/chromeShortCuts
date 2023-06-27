@@ -34,7 +34,6 @@ async function updateBookmark(id, data) {
     });
 }
 
-
 // return all bookmarks in folder
 // add type to make distinguishing between bookmarks and folders easier
 async function getBookmarksInFolder(folderId) {
@@ -56,7 +55,7 @@ async function getBookmarksInFolder(folderId) {
 async function getBookmarkById(id) {
     return new Promise((resolve, reject) => {
         chrome.bookmarks.get(id, (event) => {
-            resolve(event);
+            resolve(event[0]);
         });
     });
 }
