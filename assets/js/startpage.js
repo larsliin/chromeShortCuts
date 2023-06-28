@@ -37,18 +37,18 @@ async function onBrowserBookmarkMoved(bookmarkid, eventobj) {
     const bookmark = await getBookmarkById(bookmarkid);
 
     if (bookmark.url) {
-        moveBookmark(bookmark, eventobj);
+        reorderBookmarks(bookmark, eventobj);
     } else {
-        moveFolder(bookmark, eventobj);
+        reorderFolders(bookmark, eventobj);
     }
 }
 
-function moveBookmark(bookmark, eventobj) {
+function reorderBookmarks(bookmark, eventobj) {
     const folderBookmarks = bookmarks.find(e => e.children.find(a => a.id === bookmark.id)).children;
-    arraymove(folderBookmarks, eventobj.oldIndex, eventobj.index);
-
     const bookmarkElem = document.getElementById(`bookmark_${bookmark.id}`);
     const bookmarkContainer = document.querySelector(`#folder_${eventobj.parentId} .folder-inner`);
+
+    arraymove(folderBookmarks, eventobj.oldIndex, eventobj.index);
 
     const index = eventobj.index > eventobj.oldIndex ? eventobj.index + 1 : eventobj.index;
     if (eventobj.index > eventobj.oldIndex) {
@@ -58,7 +58,7 @@ function moveBookmark(bookmark, eventobj) {
     }
 }
 
-function moveFolder(bookmark, eventobj) {
+function reorderFolders(bookmark, eventobj) {
     arraymove(bookmarks, eventobj.oldIndex, eventobj.index);
 
     const index = eventobj.index > eventobj.oldIndex ? eventobj.index + 1 : eventobj.index;
@@ -69,12 +69,7 @@ function moveFolder(bookmark, eventobj) {
     const navBtn = document.getElementById(`nav_${bookmark.id}`);
     navigationContainer.insertBefore(navBtn, navigationContainer.children[index]);
 
-    if (eventobj.index <= currentSlideIndex && eventobj.oldIndex >= currentSlideIndex) {
-        currentSlideIndex = Math.min(currentSlideIndex + 1, bookmarks.length - 1);
-    }
-
     setActiveNav(document.querySelectorAll('.navigation-item')[currentSlideIndex]);
-
 }
 
 function arraymove(arr, fromIndex, toIndex) {
