@@ -183,6 +183,19 @@ BOOKMARKS
     text-decoration: none;
 }
 
+.bookmark-image-inset {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 20px 10px rgba(0, 0, 0, 0.04) inset;
+    opacity: 0;
+    transition: opacity 0.05s;
+}
+
+.bookmark-link:active .bookmark-image-inset {
+    opacity: 1;
+}
+
 .bookmark-image-container {
     align-items: center;
     background-color: #fff;
@@ -193,10 +206,12 @@ BOOKMARKS
     font-size: 50px;
     height: 70px;
     justify-content: center;
+    padding: 10px;
+    position: relative;
+    transform-origin: center right;
     transition: all 0.05s;
     width: 70px;
-    transform-origin: center right;
-    padding: 10px;
+    overflow: hidden;
 }
 
 .bookmark:hover .bookmark-image-container {
@@ -213,6 +228,7 @@ BOOKMARKS
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
+    border-radius: 7px;
     display: block;
     height: 100%;
     width: 100%;

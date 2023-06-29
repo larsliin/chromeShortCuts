@@ -44,30 +44,77 @@ async function onBrowserBookmarkMoved(bookmarkid, eventobj) {
 }
 
 function reorderBookmarks(bookmark, eventobj) {
-    const folderBookmarks = bookmarks.find(e => e.children.find(a => a.id === bookmark.id)).children;
-    const bookmarkElem = document.getElementById(`bookmark_${bookmark.id}`);
-    const bookmarkContainer = document.querySelector(`#folder_${eventobj.parentId} .folder-inner`);
+    if (!bookmark.url) {
+        return;
+    }
+    const folderIdArr = bookmarks.map(e => e.id);
 
-    arraymove(folderBookmarks, eventobj.oldIndex, eventobj.index);
+    // move bookmark into root folder
+    if (!folderIdArr.includes(eventobj.oldParentId)) {
+        const bookmarkChildren = bookmarks.find(e => e.id === eventobj.parentId).children;
+        bookmarkChildren.splice(eventobj.index, 0, bookmark);
 
-    const index = eventobj.index > eventobj.oldIndex ? eventobj.index + 1 : eventobj.index;
-    if (eventobj.index > eventobj.oldIndex) {
+        addBookmarkToDOM(bookmark, eventobj.parentId, eventobj.index);
+    }
+
+    // move bookmarks internally
+    if (folderIdArr.includes(eventobj.oldParentId) && folderIdArr.includes(eventobj.parentId)) {
+        const index = eventobj.index > eventobj.oldIndex ? eventobj.index + 1 : eventobj.index;
+        const folderBookmarks = bookmarks.find(e => e.children.find(a => a.id === bookmark.id)).children;
+        const bookmarkElem = document.getElementById(`bookmark_${bookmark.id}`);
+        const bookmarkContainer = document.querySelector(`#folder_${eventobj.parentId} .folder-inner`);
+
+        arraymove(folderBookmarks, eventobj.oldIndex, eventobj.index);
+
         bookmarkContainer.insertBefore(bookmarkElem, bookmarkContainer.children[index]);
-    } else {
-        bookmarkContainer.insertBefore(bookmarkElem, bookmarkContainer.children[index]);
+    }
+
+    // move bookmark out of root folder
+    if (folderIdArr.includes(eventobj.oldParentId) && !folderIdArr.includes(eventobj.parentId)) {
+        onBrowserBookmarkRemoved(bookmark.id)
     }
 }
 
-function reorderFolders(bookmark, eventobj) {
-    arraymove(bookmarks, eventobj.oldIndex, eventobj.index);
+async function reorderFolders(folder, eventobj) {
+    // move bookmark into root folder
+    if (eventobj.parentId === rootFolderId.toString() && eventobj.oldParentId !== rootFolderId.toString()) {
+        const response = await getBookmarksInFolder(folder.id);
+        const folderClone = folder;
+        folderClone.children = response;
+        bookmarks.splice(eventobj.index, 0, folderClone);
 
-    const index = eventobj.index > eventobj.oldIndex ? eventobj.index + 1 : eventobj.index;
+        addFolderToDOM(folderClone, eventobj.index);
 
-    const folder = document.getElementById(`folder_${bookmark.id}`);
-    foldersContainer.insertBefore(folder, foldersContainer.children[index]);
+        folderClone.children.forEach((bookmark) => {
+            addBookmarkToDOM(bookmark, folder.id);
+        });
 
-    const navBtn = document.getElementById(`nav_${bookmark.id}`);
-    navigationContainer.insertBefore(navBtn, navigationContainer.children[index]);
+        slide(eventobj.index);
+    }
+
+    // move bookmarks internally
+    if (eventobj.parentId === rootFolderId.toString() && eventobj.oldParentId === rootFolderId.toString()) {
+        arraymove(bookmarks, eventobj.oldIndex, eventobj.index);
+
+        const index = eventobj.index > eventobj.oldIndex ? eventobj.index + 1 : eventobj.index;
+
+        const folderElem = document.getElementById(`folder_${folder.id}`);
+        foldersContainer.insertBefore(folderElem, foldersContainer.children[index]);
+    }
+
+    // move bookmark out of root folder
+    if (eventobj.parentId !== rootFolderId.toString() && eventobj.oldParentId === rootFolderId.toString()) {
+        bookmarks.splice(eventobj.oldIndex, 1);
+
+        document.getElementById(`folder_${folder.id}`).remove();
+        document.getElementById(`nav_${folder.id}`).remove();
+
+        if (currentSlideIndex >= bookmarks.length) {
+            slide(bookmarks.length - 1);
+        }
+    }
+
+    buildNavigation();
 
     setActiveNav(document.querySelectorAll('.navigation-item')[currentSlideIndex]);
 }
@@ -102,7 +149,7 @@ function openSettings() {
 }
 
 function renderFolderSelect(selectedindex) {
-    const folders = bookmarks.map(e => e.name);
+    const folders = bookmarks.map(e => e.title);
     const index = selectedindex ? selectedindex : -1;
     inpSelectFolder.innerHTML = '';
 
@@ -171,12 +218,11 @@ async function openEditBookmark() {
         document.getElementById('inp_radio_2').checked = true;
         document.getElementById('fieldgroup_folder_text').classList.add('d-none');
         document.getElementById('fieldgroup_folder_select').classList.add('d-block');
-
     }
+
     mdcSelect.setSelectedIndex(folderIndex);
+
     dialog.open();
-
-
 }
 
 // add-bookmark input elements event handlers
@@ -271,7 +317,6 @@ async function updateImage(id) {
     const base64 = await getBase64Data(image);
     await setLocalStorage({ [id]: { image: base64 } });
     image = null;
-
 }
 
 async function updateBookmarkDOM(bookmark) {
@@ -280,13 +325,12 @@ async function updateBookmarkDOM(bookmark) {
     bookmarkElem.querySelector('.bookmark-title-container').innerText = bookmark.title;
     bookmarkElem.querySelector('a').href = bookmark.url;
     if (imgElem) {
-        const storageItem = await getFromStorage(bookmark.id);
+        const storageItem = await getLocalStorage(bookmark.id);
 
         imgElem.style.backgroundImage = `url('${storageItem.image}')`;
     } else {
         addImageToDom(bookmark);
     }
-    // debugger;
 }
 
 /**
@@ -308,6 +352,7 @@ async function createBookmark(o) {
                 rootFolderId = existingRootFolder[0].id;
                 createdRootFolder = existingRootFolder[0];
             }
+            setLocalStorage({ rootFolderId });
         }
 
         // create subfolder
@@ -322,9 +367,8 @@ async function createBookmark(o) {
             bookmarks.push({
                 children: [],
                 id: subFolderId,
-                name: folderName,
+                title: folderName,
                 parentId: rootFolderId,
-                type: createdFolder.type,
             });
         } else {
             subFolderId = existingFolder[0].id;
@@ -361,7 +405,7 @@ async function onBrowserBookmarkCreated(event) {
         // bookmark added
         const folder = bookmarks.find(e => e.id === item.parentId);
         const index = bookmarks.findIndex(e => e.id === item.parentId);
-        addBookmarkToDOM(item, folder);
+        addBookmarkToDOM(item, folder.id);
 
         slide(index);
     } else {
@@ -376,9 +420,11 @@ async function onBrowserBookmarkCreated(event) {
 }
 
 async function onBrowserBookmarkRemoved(bookmarkid) {
+
     const isRootFolder = bookmarkid === rootFolderId;
 
     if (isRootFolder) {
+        setLocalStorage({ rootFolderId: null });
         resetAll();
         return;
     }
@@ -395,6 +441,9 @@ async function onBrowserBookmarkRemoved(bookmarkid) {
 
     } else {
         const folder = bookmarks.find(e => e.children.find(a => a.id === bookmarkid));
+        if (!folder) {
+            return;
+        }
 
         const bookmark = folder.children.find(e => e.id === bookmarkid);
         const elem = document.getElementById(`bookmark_${bookmark.id}`);
@@ -412,8 +461,6 @@ async function onBrowserBookmarkRemoved(bookmarkid) {
     }
 }
 
-
-
 function resetAll() {
     bookmarks = [];
     foldersContainer.innerHTML = '';
@@ -430,34 +477,45 @@ function resetAll() {
  * RENDER BOOKMARKS
  */
 // add bookmarks folder container to DOM
-function addFolderToDOM(folder) {
+function addFolderToDOM(folder, index) {
     const container = document.createElement('div');
     const containerInner = document.createElement('div');
     container.className = 'folder';
     containerInner.className = 'folder-inner';
     container.id = `folder_${folder.id}`;
-    foldersContainer.appendChild(container);
     container.appendChild(containerInner);
+
+    if (index === undefined) {
+        foldersContainer.appendChild(container);
+    } else {
+        foldersContainer.insertBefore(container, foldersContainer.children[index]);
+
+    }
 }
 
 // add bookmark to DOM in container
-async function addBookmarkToDOM(bookmark, folder) {
-    const folderElem = document.getElementById(`folder_${folder.id}`);
-    const folderInnerElem = folderElem.querySelector(`.folder-inner`);
-
+async function addBookmarkToDOM(bookmark, folderid, index) {
+    if (!bookmark.url) {
+        return;
+    }
     const linkContainerElem = document.createElement('span');
-    linkContainerElem.className = 'bookmark';
-    linkContainerElem.id = `bookmark_${bookmark.id}`;
-    folderInnerElem.appendChild(linkContainerElem);
+
+    const folderElem = document.getElementById(`folder_${folderid}`);
+    const folderInnerElem = folderElem.querySelector(`.folder-inner`);
 
     const linkElem = document.createElement('a');
     linkElem.href = bookmark.url;
     linkElem.className = 'bookmark-link';
     linkContainerElem.appendChild(linkElem);
 
+
     const linkImgContainerElem = document.createElement('span');
     linkImgContainerElem.className = 'bookmark-image-container';
     linkElem.appendChild(linkImgContainerElem);
+
+    const linkInnerShadowElem = document.createElement('span');
+    linkInnerShadowElem.className = 'bookmark-image-inset';
+    linkImgContainerElem.appendChild(linkInnerShadowElem);
 
     const linkTitleContainer = document.createElement('span');
     linkTitleContainer.className = 'bookmark-title-container';
@@ -472,6 +530,16 @@ async function addBookmarkToDOM(bookmark, folder) {
     editElem.addEventListener('click', onEditClick);
     linkContainerElem.appendChild(editElem);
 
+    linkContainerElem.className = 'bookmark';
+    linkContainerElem.id = `bookmark_${bookmark.id}`;
+
+    if (index !== undefined) {
+        const bookmarkContainer = document.querySelector(`#folder_${folderid} .folder-inner`);
+        bookmarkContainer.insertBefore(linkContainerElem, bookmarkContainer.children[index]);
+    } else {
+        folderInnerElem.appendChild(linkContainerElem);
+    }
+
     addImageToDom(bookmark);
 }
 
@@ -484,8 +552,8 @@ function onEditClick(event) {
 
     openEditBookmark();
 
-    if (folder.name !== rootFolderKey) {
-        //inpFolder.value = folder.name;
+    if (folder.title !== rootFolderKey) {
+        //inpFolder.value = folder.title;
         // inpFolder.focus();
         // inpFolder.blur();
     }
@@ -513,7 +581,7 @@ async function addImageToDom(bookmark) {
         return;
     }
 
-    const storageItem = await getFromStorage(bookmark.id);
+    const storageItem = await getLocalStorage(bookmark.id);
 
     if (storageItem) {
         const imgElem = document.createElement('span');
@@ -607,6 +675,7 @@ function setActiveNav(item) {
 function onSlideEnd() {
     setLocalStorage({ sliderIndex: currentSlideIndex });
 }
+
 /**
  * INITIAL
  */
@@ -627,7 +696,7 @@ async function initBookmarks() {
             const o = {};
             o.children = e.children;
             o.id = e.id;
-            o.name = e.title;
+            o.title = e.title;
             o.parentId = e.parentId;
             return o;
         });
@@ -639,7 +708,7 @@ async function initBookmarks() {
 async function goToSlide() {
     if (goToOpenedLast) {
 
-        let folderIndex = await getFromStorage('sliderIndex');
+        let folderIndex = await getLocalStorage('sliderIndex');
         if (folderIndex > bookmarks.length) {
             folderIndex = bookmarks.length - 1;
         }
@@ -661,6 +730,12 @@ async function goToSlide() {
 }
 
 async function init() {
+    const rootId = await getLocalStorage('rootFolderId');
+
+    if (rootId) {
+        rootFolderId = rootId;
+    }
+
     await initBookmarks();
 
     renderFolderSelect();
@@ -673,11 +748,13 @@ async function init() {
         addFolderToDOM(folder);
 
         folder.children.forEach((bookmark) => {
-            addBookmarkToDOM(bookmark, folder);
+            addBookmarkToDOM(bookmark, folder.id);
         });
     });
 
     foldersContainer.addEventListener('transitionend', onSlideEnd);
+
+    // setLocalStorage({ rootFolderId: null });
 }
 
 init();

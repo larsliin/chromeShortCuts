@@ -68,7 +68,7 @@ async function setLocalStorage(item) {
     });
 }
 
-async function getFromStorage(id) {
+async function getLocalStorage(id) {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(id, function (data) {
             resolve(data[id]);
