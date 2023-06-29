@@ -10,6 +10,7 @@ const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const foldersContainer = document.getElementById('folders_container');
 const navigationContainer = document.getElementById('navigation_container');
+const btnExport = document.getElementById('btn_export');
 const rootFolderName = 'Shortcutters';
 const rootFolderKey = '_root';
 let image;
@@ -27,11 +28,16 @@ inpFolder.addEventListener('keydown', onInpKeyDown);
 inpTitle.addEventListener('keydown', onInpKeyDown);
 inpUrl.addEventListener('keydown', onInpKeyDown);
 inpFile.addEventListener('change', onAddFile);
+btnExport.addEventListener('click', onExportBtnClick);
 
 chrome.bookmarks.onCreated.addListener(onBrowserBookmarkCreated);
 chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
 
 chrome.bookmarks.onMoved.addListener(onBrowserBookmarkMoved);
+
+function onExportBtnClick() {
+    exportBookmarks();
+}
 
 async function onBrowserBookmarkMoved(bookmarkid, eventobj) {
     const bookmark = await getBookmarkById(bookmarkid);
