@@ -10,10 +10,14 @@ const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const foldersContainer = document.getElementById('folders_container');
 const navigationContainer = document.getElementById('navigation_container');
+const inpImport = document.getElementById('inp_import');
 const btnExport = document.getElementById('btn_export');
+const btnCancelSettings = document.getElementById('btn_cancel_settings');
+const btnUpdateSettings = document.getElementById('btn_update_settings');
 const rootFolderName = 'Shortcutters';
 const rootFolderKey = '_root';
-let image;
+let imageFile;
+let importFile;
 let rootFolderId;
 let editBookmarkId;
 let sliderTimeout;
@@ -28,7 +32,13 @@ inpFolder.addEventListener('keydown', onInpKeyDown);
 inpTitle.addEventListener('keydown', onInpKeyDown);
 inpUrl.addEventListener('keydown', onInpKeyDown);
 inpFile.addEventListener('change', onAddFile);
+inpImport.addEventListener('change', onImportBtnClick);
 btnExport.addEventListener('click', onExportBtnClick);
+btnExport.addEventListener('click', onExportBtnClick);
+btnCancelSettings.addEventListener('click', onUpdateCancel);
+btnUpdateSettings.addEventListener('click', onUpdateSettings);
+
+
 
 chrome.bookmarks.onCreated.addListener(onBrowserBookmarkCreated);
 chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
@@ -37,6 +47,71 @@ chrome.bookmarks.onMoved.addListener(onBrowserBookmarkMoved);
 
 function onExportBtnClick() {
     exportBookmarks();
+}
+
+function onImportBtnClick(event) {
+    const reader = new FileReader();
+    reader.onload = onReaderLoad;
+    reader.readAsText(event.target.files[0]);
+}
+
+function onReaderLoad(event) {
+    importFile = JSON.parse(event.target.result);
+}
+
+function onUpdateCancel() {
+    importFile = undefined;
+}
+
+async function onUpdateSettings() {
+    if (importFile) {
+        if (rootFolderId) {
+            await removeBookmarksFolder(rootFolderId);
+        }
+
+        resetAll();
+
+        await clearImageStorage();
+
+        const response = await importFolders(importFile);
+
+        const folderMapping = response.map(e => {
+            const o = {};
+            o.id = e.id;
+            o.oldId = e.oldId;
+            return o;
+        });
+        const flatObj = folderMapping.reduce((obj, item) => Object.assign(obj, { [item.oldId]: item.id }), {});
+
+        const importBookmarksResponse = await importBookmarks(importFile, flatObj);
+
+        //addImageToDom
+        // filter all bookmarks that have an image assigned
+        const imageBookmarks = importFile
+            .map(obj => ({
+                ...obj,
+                children: obj.children.filter(child => child.hasOwnProperty('base64'))
+            }))
+            .filter(obj => obj.children.length > 0);
+
+        // convert into a flattened array for easy iteration
+        const flattenedChildren = imageBookmarks.map(obj => obj.children).flat();
+        flattenedChildren.map(e => {
+            const o = e;
+            o.newId = importBookmarksResponse.find(a => a.oldId === e.id).id;
+            return o;
+        });
+
+        await storeImages(flattenedChildren);
+
+        for (const bookmark of flattenedChildren) {
+            addImageToDom(bookmark);
+        }
+    }
+
+    dialogSettings.close();
+
+    importFile = undefined;
 }
 
 async function onBrowserBookmarkMoved(bookmarkid, eventobj) {
@@ -184,6 +259,10 @@ function renderFolderSelect(selectedindex) {
 
 inpTitle.value = Date.now();
 
+dialogSettings.listen('MDCDialog:closed', () => {
+    inpImport.value = '';
+});
+
 dialog.listen('MDCDialog:closed', () => {
     folderStr = null;
     inpFolder.value = '';
@@ -196,8 +275,6 @@ dialog.listen('MDCDialog:closed', () => {
     document.getElementById('inp_radio_1').checked = true;
     document.getElementById('fieldgroup_folder_text').classList.remove('d-none');
     document.getElementById('fieldgroup_folder_select').classList.remove('d-block');
-
-
 });
 
 dialog.listen('MDCDialog:opened', () => {
@@ -255,7 +332,7 @@ document.querySelectorAll("input[name='folderRadioGrp']").forEach((input) => {
 
 
 function onAddFile(event) {
-    image = event.target.files[0];
+    imageFile = event.target.files[0];
 }
 
 async function onCreateBookmarkClick() {
@@ -308,21 +385,21 @@ async function editBookmark(id, data) {
     });
 
     await updateBookmark(id, data);
-    await updateImage(id);
-
+    await updateImage(id, imageFile);
+    imageFile = null;
     updateBookmarkDOM({ parentId, id, title, url });
 
     dialog.close();
 }
 
-async function updateImage(id) {
-    if (!image) {
+async function updateImage(id, img) {
+    if (!img) {
         return;
     }
 
-    const base64 = await getBase64Data(image);
+    const base64 = await getBase64Data(img);
     await setLocalStorage({ [id]: { image: base64 } });
-    image = null;
+
 }
 
 async function updateBookmarkDOM(bookmark) {
@@ -370,12 +447,6 @@ async function createBookmark(o) {
             const createdFolder = await createBookmarkFolder(rootFolderId, folderName);
             folder = createdFolder;
             subFolderId = createdFolder.id;
-            bookmarks.push({
-                children: [],
-                id: subFolderId,
-                title: folderName,
-                parentId: rootFolderId,
-            });
         } else {
             subFolderId = existingFolder[0].id;
             folder = existingFolder[0];
@@ -385,14 +456,9 @@ async function createBookmark(o) {
         let bookmark;
         if (o.title && o.title !== '') {
             bookmark = await createBookmarkInFolder(subFolderId, o.title, o.url);
-            if (image) {
-                await updateImage(bookmark.id);
-                addImageToDom(bookmark);
-            }
 
-            const bookmarksFolder = bookmarks.find(e => e.id === bookmark.parentId);
-            bookmarksFolder.children.push(bookmark);
         }
+
         dialog.close();
 
         resolve({ folder, bookmark });
@@ -401,23 +467,39 @@ async function createBookmark(o) {
 /**
  * CHROME BOOKMARK CREATED HANDLER
  */
-async function onBrowserBookmarkCreated(event) {
-    const response = await getBookmarkById(event);
-    const item = response;
+async function onBrowserBookmarkCreated(event, bookmark) {
 
     buildNavigation();
-
-    if (item.url) {
+    if (bookmark.url) {
         // bookmark added
-        const folder = bookmarks.find(e => e.id === item.parentId);
-        const index = bookmarks.findIndex(e => e.id === item.parentId);
-        addBookmarkToDOM(item, folder.id);
+
+        const folder = bookmarks.find(e => e.id === bookmark.parentId);
+
+        if (!folder.children) {
+            folder.children = [];
+        }
+        folder.children.push(bookmark);
+
+        const index = bookmarks.findIndex(e => e.id === bookmark.parentId);
+        addBookmarkToDOM(bookmark, folder.id);
+
+        if (imageFile) {
+            await updateImage(bookmark.id, imageFile);
+            imageFile = null;
+            addImageToDom(bookmark);
+        }
 
         slide(index);
     } else {
+
         // folder added
+        if (bookmark.parentId === '2') {
+            return;
+        }
+
+        bookmarks.push(bookmark);
         if (bookmarks.length) {
-            const folder = bookmarks.find(e => e.id === item.id);
+            const folder = bookmarks.find(e => e.id === bookmark.id);
             if (!document.getElementById(`folder_${folder.id}`)) {
                 addFolderToDOM(folder);
             }
@@ -426,7 +508,6 @@ async function onBrowserBookmarkCreated(event) {
 }
 
 async function onBrowserBookmarkRemoved(bookmarkid) {
-
     const isRootFolder = bookmarkid === rootFolderId;
 
     if (isRootFolder) {
@@ -474,6 +555,7 @@ function resetAll() {
 
     foldersContainer.style.transform = ``;
 
+    clearStorageItem('rootFolderId');
     rootFolderId = null;
     currentSlideIndex = 0
     setLocalStorage({ sliderIndex: currentSlideIndex });
@@ -580,20 +662,19 @@ async function addImageToDom(bookmark) {
     if (!bookmark) {
         return;
     }
-
-    const linkImgContainerElem = document.querySelector(`#bookmark_${bookmark.id} .bookmark-image-container`);
+    const id = bookmark.newId ? bookmark.newId : bookmark.id;
+    const linkImgContainerElem = document.querySelector(`#bookmark_${id} .bookmark-image-container`);
 
     if (!linkImgContainerElem) {
         return;
     }
 
-    const storageItem = await getLocalStorage(bookmark.id);
+    const storageItem = await getLocalStorage(id);
 
     if (storageItem) {
         const imgElem = document.createElement('span');
         imgElem.style.backgroundImage = `url('${storageItem.image}')`;
         imgElem.classList = 'bookmark-image';
-
         linkImgContainerElem.classList.remove('bi-star-fill');
         linkImgContainerElem.appendChild(imgElem);
     } else {
@@ -760,7 +841,6 @@ async function init() {
 
     foldersContainer.addEventListener('transitionend', onSlideEnd);
 
-    // setLocalStorage({ rootFolderId: null });
 }
 
 init();

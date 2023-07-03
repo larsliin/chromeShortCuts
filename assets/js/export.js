@@ -1,22 +1,45 @@
-const bookmarkData = [];
-let imageArr;
-let count = 0;
-function exportBookmarks() {
-    imageArr = bookmarks.flatMap(data => data.children.map(child => child.id));
+async function exportBookmarks() {
+    const imgArr = await fetchLocalStorageBookmarks();
 
-    getImageData(count);
-}
+    const bookmarksCloned = structuredClone(bookmarks);
 
-async function getImageData(index) {
-    const response = await getLocalStorage(imageArr[index]);
-    if (index < imageArr.length) {
-        if (response) {
-            bookmarkData.push({ [imageArr[index]]: response.image })
+    imgArr.forEach(obj => {
+        // Loop through the object's key-value pairs
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                const foundObject = bookmarksCloned.find(obj => obj.children.find(child => child.id === key));
+                const child = foundObject.children.find(e => e.id === key);
+
+                if (foundObject && child) {
+                    child.base64 = obj[key].image;
+                }
+            }
         }
-        count = count + 1;
-        getImageData(count);
+    });
 
-    } else {
-        console.log(bookmarkData);
-    }
+    const jsonString = JSON.stringify(bookmarksCloned);
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([jsonString], { type: "application/json" }));
+    a.download = 'bookmarks-exported.json';
+    a.click();
 }
+
+async function fetchLocalStorageBookmarks() {
+    const ids = bookmarks.flatMap(data => data.children.map(child => child.id));
+    const promises = [];
+
+    for (const id of ids) {
+        const promise = getLocalStorage(id);
+        promises.push(promise.then(value => ({ [id]: value })));
+    }
+
+    const allPromises = await Promise.all(promises);
+
+    // filter away objects with value = undefined
+    const result = allPromises.filter(obj => {
+        const values = Object.values(obj);
+        return !values.some(value => value === undefined);
+    });
+    return result;
+};

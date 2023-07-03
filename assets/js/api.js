@@ -110,3 +110,116 @@ function searchFolder(bookmarkTreeNodes, folderName) {
         }
     }
 }
+
+async function removeBookmarksFolder(id) {
+    return new Promise((resolve, reject) => {
+        chrome.bookmarks.removeTree(
+            id,
+            () => {
+                resolve();
+            },
+        )
+    });
+}
+
+async function clearImageStorage() {
+    const ids = bookmarks.flatMap(data => data.children.map(child => child.id));
+
+    return new Promise((resolve, reject) => {
+        if (ids.length) {
+            chrome.storage.local.remove([ids], function () {
+                var error = chrome.runtime.lastError;
+                if (error) {
+                    console.error(error);
+                }
+                resolve();
+            })
+        } else {
+            resolve();
+        }
+    });
+};
+
+
+async function clearStorageItem(id) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.remove([id], function () {
+            var error = chrome.runtime.lastError;
+            if (error) {
+                console.error(error);
+            }
+            resolve();
+        })
+    });
+}
+
+
+async function importFolders(obj) {
+    const existingRootFolder = await searchBookmarkFolder2('2', rootFolderName);
+    let folder;
+    if (!rootFolderId) {
+        if (existingRootFolder.length === 0) {
+            // create root folder if no root folder
+            const createdRootFolder = await createBookmarkFolder('2', rootFolderName);
+            rootFolderId = createdRootFolder.id;
+
+            folder = createdRootFolder;
+            setLocalStorage({ rootFolderId });
+        }
+    }
+
+    const promises = [];
+
+    for (const folder of obj) {
+        const promise = createBookmarkFolder(rootFolderId, folder.title);
+
+        promises.push(promise.then(value => {
+            value.oldId = folder.id;
+            return value;
+        }));
+    }
+
+    return await Promise.all(promises);
+};
+
+async function importBookmarks(bookmarks, flatObj) {
+    const bookmarksFlat = bookmarks.map(item => {
+        const children = item.children || [];
+        const childIds = children.map(child => child);
+        return [...childIds];
+    }).flat();
+
+    const promises = [];
+
+    for (const bookmark of bookmarksFlat) {
+        const promise = createBookmarkInFolder(flatObj[bookmark.parentId], bookmark.title, bookmark.url);
+
+        promises.push(promise.then(value => {
+            value.oldId = bookmark.id;
+            return value;
+        }));
+    }
+
+    const allPromises = await Promise.all(promises);
+    return allPromises;
+}
+
+async function storeImages(obj) {
+    return new Promise((resolve, reject) => {
+        const promises = obj.map((item) => {
+            return new Promise((resolve, reject) => {
+                chrome.storage.local.set({ [item.newId]: { image: item.base64 } }, () => {
+                    resolve();
+                });
+            });
+        });
+
+        Promise.all(promises)
+            .then(() => {
+                resolve(); // Resolve the outer promise
+            })
+            .catch((error) => {
+                reject(error); // Reject the outer promise
+            });
+    });
+};
