@@ -23,7 +23,8 @@ let editBookmarkId;
 let sliderTimeout;
 let currentSlideIndex = 0;
 const goToOpenedLast = true;
-let folderStr;
+let selectedFolderStr;
+let selectedFolderId;
 
 btnSettings.addEventListener('click', openSettings);
 btnAddBookmark.addEventListener('click', openEditBookmark);
@@ -221,7 +222,12 @@ textFields.forEach((textField) => {
 // initialize folder select dropdown
 const mdcSelect = new mdc.select.MDCSelect(document.querySelector('.mdc-select'));
 mdcSelect.listen('MDCSelect:change', () => {
-    folderStr = mdcSelect.value;
+
+    if (mdcSelect.selectedIndex < 0) {
+        return;
+    }
+    selectedFolderStr = mdcSelect.value;
+    selectedFolderId = bookmarks[mdcSelect.selectedIndex].id;
 });
 
 
@@ -230,14 +236,20 @@ function openSettings() {
 }
 
 function renderFolderSelect(selectedindex) {
-    const folders = bookmarks.map(e => e.title);
+    const folders = bookmarks.map(e => {
+        const o = {};
+        o.title = e.title;
+        o.id = e.id;
+        return o;
+    });
     const index = selectedindex ? selectedindex : -1;
     inpSelectFolder.innerHTML = '';
 
     for (let i = 0; i < folders.length; i++) {
         const liElem = document.createElement('li');
         liElem.classList.add('mdc-list-item');
-        liElem.setAttribute('data-value', folders[i]);
+        liElem.setAttribute('data-value', folders[i].title);
+        liElem.setAttribute('id', `folder_${folders[i].id}`);
         liElem.role = 'option'
 
         const rippleElem = document.createElement('span');
@@ -246,7 +258,7 @@ function renderFolderSelect(selectedindex) {
 
         const itemElem = document.createElement('span');
         itemElem.classList.add('mdc-list-item__text');
-        itemElem.innerText = folders[i];
+        itemElem.innerText = folders[i].title;
         liElem.appendChild(itemElem);
 
         inpSelectFolder.appendChild(liElem);
@@ -264,7 +276,8 @@ dialogSettings.listen('MDCDialog:closed', () => {
 });
 
 dialog.listen('MDCDialog:closed', () => {
-    folderStr = null;
+    selectedFolderStr = null;
+    selectedFolderId = null;
     inpFolder.value = '';
     inpTitle.value = Date.now();
     inpUrl.value = 'http://123.com';
@@ -336,17 +349,21 @@ function onAddFile(event) {
 }
 
 async function onCreateBookmarkClick() {
+
     let folder = inpFolder.value;
+    let folderId;
 
     if (document.getElementById('inp_radio_2').checked) {
-        folder = folderStr;
+        folderId = selectedFolderId;
+        folder = selectedFolderStr;
     }
 
     const title = inpTitle.value;
     const url = inpUrl.value;
 
     if (editBookmarkId) {
-        const parentId = folder === '' ? rootFolderKey : folder;
+        const homeFolderId = bookmarks.find(e => e.title === rootFolderKey).id;
+        const parentId = folder === '' ? homeFolderId : folderId;
         await editBookmark(editBookmarkId, { parentId, title, url });
     } else {
         await createBookmark({ folder, title, url });
@@ -370,6 +387,7 @@ async function getBase64Data(file) {
  */
 async function editBookmark(id, data) {
     let bookmark;
+
     const { parentId, title, url } = data;
     bookmarks.find(obj => {
         if (Array.isArray(obj.children)) {
@@ -456,7 +474,6 @@ async function createBookmark(o) {
         let bookmark;
         if (o.title && o.title !== '') {
             bookmark = await createBookmarkInFolder(subFolderId, o.title, o.url);
-
         }
 
         dialog.close();
@@ -472,9 +489,7 @@ async function onBrowserBookmarkCreated(event, bookmark) {
     buildNavigation();
     if (bookmark.url) {
         // bookmark added
-
         const folder = bookmarks.find(e => e.id === bookmark.parentId);
-
         if (!folder.children) {
             folder.children = [];
         }
