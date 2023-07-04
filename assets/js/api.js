@@ -34,6 +34,19 @@ async function updateBookmark(id, data) {
     });
 }
 
+// move bookmark to folder
+async function moveBookmark(id, destination) {
+    return new Promise((resolve) => {
+        chrome.bookmarks.move(
+            id,
+            destination,
+            () => {
+                resolve();
+            },
+        )
+    });
+}
+
 // return all bookmarks in folder
 // add type to make distinguishing between bookmarks and folders easier
 async function getBookmarksInFolder(folderId) {

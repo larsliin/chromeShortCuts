@@ -9,20 +9,17 @@ const inpFile = document.getElementById('inp_file');
 const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const foldersContainer = document.getElementById('folders_container');
-const navigationContainer = document.getElementById('navigation_container');
 const inpImport = document.getElementById('inp_import');
 const btnExport = document.getElementById('btn_export');
 const btnCancelSettings = document.getElementById('btn_cancel_settings');
 const btnUpdateSettings = document.getElementById('btn_update_settings');
 const rootFolderName = 'Shortcutters';
-const rootFolderKey = '_root';
+const homeFolderName = '_root';
+const homeFolderDisplayName = 'Home';
 let imageFile;
 let importFile;
 let rootFolderId;
 let editBookmarkId;
-let sliderTimeout;
-let currentSlideIndex = 0;
-const goToOpenedLast = true;
 let selectedFolderStr;
 let selectedFolderId;
 
@@ -39,11 +36,8 @@ btnExport.addEventListener('click', onExportBtnClick);
 btnCancelSettings.addEventListener('click', onUpdateCancel);
 btnUpdateSettings.addEventListener('click', onUpdateSettings);
 
-
-
 chrome.bookmarks.onCreated.addListener(onBrowserBookmarkCreated);
 chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
-
 chrome.bookmarks.onMoved.addListener(onBrowserBookmarkMoved);
 
 function onExportBtnClick() {
@@ -74,45 +68,46 @@ async function onUpdateSettings() {
 
         await clearImageStorage();
 
-        const response = await importFolders(importFile);
+        const importFoldersResponse = await importFolders(importFile);
 
-        const folderMapping = response.map(e => {
+        const folderMapping = importFoldersResponse.map(e => {
             const o = {};
             o.id = e.id;
             o.oldId = e.oldId;
             return o;
         });
-        const flatObj = folderMapping.reduce((obj, item) => Object.assign(obj, { [item.oldId]: item.id }), {});
-
-        const importBookmarksResponse = await importBookmarks(importFile, flatObj);
-
-        //addImageToDom
-        // filter all bookmarks that have an image assigned
-        const imageBookmarks = importFile
-            .map(obj => ({
-                ...obj,
-                children: obj.children.filter(child => child.hasOwnProperty('base64'))
-            }))
-            .filter(obj => obj.children.length > 0);
-
-        // convert into a flattened array for easy iteration
-        const flattenedChildren = imageBookmarks.map(obj => obj.children).flat();
-        flattenedChildren.map(e => {
-            const o = e;
-            o.newId = importBookmarksResponse.find(a => a.oldId === e.id).id;
-            return o;
-        });
-
-        await storeImages(flattenedChildren);
-
-        for (const bookmark of flattenedChildren) {
-            addImageToDom(bookmark);
-        }
+        const flatFolderMapping = folderMapping.reduce((obj, item) => Object.assign(obj, { [item.oldId]: item.id }), {});
+        const importBookmarksResponse = await importBookmarks(importFile, flatFolderMapping);
+        importBookmarkImages(importBookmarksResponse);
     }
 
     dialogSettings.close();
 
     importFile = undefined;
+}
+
+async function importBookmarkImages(bmarks) {
+    // filter all bookmarks that have an image assigned
+    const imageBookmarks = importFile
+        .map(obj => ({
+            ...obj,
+            children: obj.children.filter(child => child.hasOwnProperty('base64'))
+        }))
+        .filter(obj => obj.children.length > 0);
+
+    // convert into a flattened array for easy iteration
+    const flattenedChildren = imageBookmarks.map(obj => obj.children).flat();
+    flattenedChildren.map(e => {
+        const o = e;
+        o.newId = bmarks.find(a => a.oldId === e.id).id;
+        return o;
+    });
+
+    await storeImages(flattenedChildren);
+
+    for (const bookmark of flattenedChildren) {
+        addImageToDom(bookmark);
+    }
 }
 
 async function onBrowserBookmarkMoved(bookmarkid, eventobj) {
@@ -258,7 +253,8 @@ function renderFolderSelect(selectedindex) {
 
         const itemElem = document.createElement('span');
         itemElem.classList.add('mdc-list-item__text');
-        itemElem.innerText = folders[i].title;
+        itemElem.innerText = folders[i].title === homeFolderName ? homeFolderDisplayName : folders[i].title;
+
         liElem.appendChild(itemElem);
 
         inpSelectFolder.appendChild(liElem);
@@ -343,13 +339,11 @@ document.querySelectorAll("input[name='folderRadioGrp']").forEach((input) => {
     input.addEventListener('change', onRadioFolderModeChange);
 });
 
-
 function onAddFile(event) {
     imageFile = event.target.files[0];
 }
 
 async function onCreateBookmarkClick() {
-
     let folder = inpFolder.value;
     let folderId;
 
@@ -362,9 +356,11 @@ async function onCreateBookmarkClick() {
     const url = inpUrl.value;
 
     if (editBookmarkId) {
-        const homeFolderId = bookmarks.find(e => e.title === rootFolderKey).id;
+        const bookmark = getBookmarkFromBookmarks(editBookmarkId);
+        const homeFolderId = bookmarks.find(e => e.title === homeFolderName).id;
         const parentId = folder === '' ? homeFolderId : folderId;
-        await editBookmark(editBookmarkId, { parentId, title, url });
+        // debugger;
+        await editBookmark(editBookmarkId, bookmark.parentId, { parentId, title, url });
     } else {
         await createBookmark({ folder, title, url });
     }
@@ -385,7 +381,7 @@ async function getBase64Data(file) {
 /**
  * EDIT BOOKMARK
  */
-async function editBookmark(id, data) {
+async function editBookmark(id, fromParentId, data) {
     let bookmark;
 
     const { parentId, title, url } = data;
@@ -401,10 +397,14 @@ async function editBookmark(id, data) {
         }
         return false;
     });
-
+    // debugger;
+    if (fromParentId !== parentId) {
+    }
+    await moveBookmark(id, { parentId: bookmark.parentId });
     await updateBookmark(id, data);
     await updateImage(id, imageFile);
     imageFile = null;
+
     updateBookmarkDOM({ parentId, id, title, url });
 
     dialog.close();
@@ -457,7 +457,7 @@ async function createBookmark(o) {
         }
 
         // create subfolder
-        const folderName = o.folder ? o.folder : rootFolderKey;
+        const folderName = o.folder ? o.folder : homeFolderName;
         const existingFolder = await searchBookmarkFolder2(rootFolderId.toString(), folderName);
 
         if (existingFolder.length === 0) {
@@ -485,8 +485,8 @@ async function createBookmark(o) {
  * CHROME BOOKMARK CREATED HANDLER
  */
 async function onBrowserBookmarkCreated(event, bookmark) {
-
     buildNavigation();
+
     if (bookmark.url) {
         // bookmark added
         const folder = bookmarks.find(e => e.id === bookmark.parentId);
@@ -655,7 +655,7 @@ function onEditClick(event) {
 
     openEditBookmark();
 
-    if (folder.title !== rootFolderKey) {
+    if (folder.title !== homeFolderName) {
         //inpFolder.value = folder.title;
         // inpFolder.focus();
         // inpFolder.blur();
@@ -670,6 +670,11 @@ function onEditClick(event) {
         inpUrl.focus();
         inpUrl.blur();
     }
+}
+
+function getBookmarkFromBookmarks(id) {
+    return bookmarks.find(e => e.children.find(child => child.id === id))
+        .children.find(e => e.id === id);
 }
 
 // if image is stored in local storage, add image to DOM bookmark
@@ -695,87 +700,6 @@ async function addImageToDom(bookmark) {
     } else {
         linkImgContainerElem.classList.add('bi-star-fill');
     }
-}
-/*
- * NAVIGATION
- */
-// render navigation
-function buildNavigation() {
-    navigationContainer.innerHTML = '';
-
-    if (bookmarks.length > 1) {
-        bookmarks.forEach((bookmark) => {
-            const navItemContainer = document.createElement('button');
-            navItemContainer.className = 'navigation-item';
-            navItemContainer.id = `nav_${bookmark.id}`;
-            navItemContainer.addEventListener('click', onNavClick);
-
-            const navItem = document.createElement('div');
-            navItem.className = 'navigation-item-inner';
-
-            navigationContainer.appendChild(navItemContainer);
-            navItemContainer.appendChild(navItem);
-        });
-    }
-}
-
-// navtigation click handler
-function onNavClick(event) {
-    const childElements = Array.from(navigationContainer.children);
-    const index = childElements.indexOf(event.currentTarget);
-
-    slide(index);
-}
-
-function removeNavDot(bookmarkid) {
-    const elem = document.getElementById(`nav_${bookmarkid}`);
-
-    if (elem) {
-        document.getElementById(`nav_${bookmarkid}`).remove();
-    }
-
-    const currentIndex = bookmarks.findIndex(e => e.id === bookmarkid);
-
-    if (currentSlideIndex >= bookmarks.length - 1) {
-        slide(bookmarks.length - 2);
-    } else if (currentIndex < currentSlideIndex) {
-        slide(currentSlideIndex - 1);
-    }
-}
-
-// move bookmarks slider to folder
-function slide(index) {
-    if (index) {
-        const x = -1 * (index * 100);
-        foldersContainer.style.transform = `translateX(${x}%)`;
-    } else {
-        foldersContainer.style.transform = ``;
-    }
-
-    setActiveNav(document.querySelectorAll('.navigation-item')[index]);
-
-    if (sliderTimeout) {
-        clearTimeout(sliderTimeout);
-        sliderTimeout = null;
-    }
-
-    currentSlideIndex = index;
-}
-
-function setActiveNav(item) {
-    const navItem = document.querySelector('.navigation-item.active');
-    if (navItem) {
-        navItem.classList.remove('active');
-    }
-
-    if (!item) {
-        return;
-    }
-    item.classList.add('active');
-}
-
-function onSlideEnd() {
-    setLocalStorage({ sliderIndex: currentSlideIndex });
 }
 
 /**
@@ -807,30 +731,6 @@ async function initBookmarks() {
     }
 }
 
-async function goToSlide() {
-    if (goToOpenedLast) {
-
-        let folderIndex = await getLocalStorage('sliderIndex');
-        if (folderIndex > bookmarks.length) {
-            folderIndex = bookmarks.length - 1;
-        }
-        if (folderIndex) {
-            currentSlideIndex = bookmarks[folderIndex]?.id;
-
-            slide(folderIndex);
-        }
-    } else {
-        setLocalStorage({ sliderIndex: 0 });
-    }
-
-    setTimeout(() => {
-        foldersContainer.classList.add('animated');
-        foldersContainer.classList.add('d-flex');
-    }, 0);
-
-    setActiveNav(document.querySelectorAll('.navigation-item')[currentSlideIndex]);
-}
-
 async function init() {
     const rootId = await getLocalStorage('rootFolderId');
 
@@ -855,7 +755,6 @@ async function init() {
     });
 
     foldersContainer.addEventListener('transitionend', onSlideEnd);
-
 }
 
 init();
