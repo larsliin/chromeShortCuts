@@ -1,3 +1,6 @@
+const textFields = document.querySelectorAll('.mdc-text-field');
+const dialogSettings = new mdc.dialog.MDCDialog(document.getElementById('dialog_settings'));
+const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmark'));
 let bookmarks = [];
 const btnSettings = document.getElementById('btn_settings');
 const btnAddBookmark = document.getElementById('btn_add_bookmark');
@@ -206,9 +209,7 @@ function arraymove(arr, fromIndex, toIndex) {
  * ADD-BOOKMARK MODAL
  */
 
-const dialogSettings = new mdc.dialog.MDCDialog(document.getElementById('dialog_settings'));
-const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmark'));
-const textFields = document.querySelectorAll('.mdc-text-field');
+
 
 textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
@@ -758,3 +759,5 @@ async function init() {
 }
 
 init();
+
+
