@@ -310,6 +310,7 @@ NAVIGATION
     height: 35px;
     justify-content: center;
     position: relative;
+    user-select: none;
 }
 
 .navigation-header-container .navigation-header {
