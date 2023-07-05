@@ -12,6 +12,7 @@
     </head>
 
     <body>
+        <!-- header toolbar -->
         <div class="toolbar">
             <div class="toolbar-inner">
                 <div>
@@ -34,17 +35,23 @@
                 </div>
             </div>
         </div>
+        <!-- / header toolbar -->
 
+        <!-- folders slider -->
         <div class="folders-outer">
             <div class="folders-container" id="folders_container"></div>
         </div>
+        <!-- / folders slider -->
 
+        <!-- bottom navigation dots -->
         <div class="navigation-outer">
             <div
                 class="navigation-header-container"
                 id="navigation_header_container"></div>
             <div class="navigation-container" id="navigation_container"></div>
         </div>
+        <!-- / bottom navigation dots -->
+
         <!-- modal edit bookmark -->
         <div
             id="dialog_add_bookmark"
@@ -55,6 +62,7 @@
             aria-describedby="my-dialog-description">
             <div class="mdc-dialog__container">
                 <div class="mdc-dialog__surface">
+                    <!-- input: folder name radio buttons -->
                     <div class="field-group">
                         <div class="mdc-form-field">
                             <div class="mdc-radio">
@@ -72,7 +80,6 @@
                             </div>
                             <label for="inp_radio_1">Create New Folder</label>
                         </div>
-
                         <div class="mdc-form-field">
                             <div class="mdc-radio">
                                 <input
@@ -89,7 +96,8 @@
                             <label for="inp_radio_2">Use Existing Folder</label>
                         </div>
                     </div>
-
+                    <!-- / input: folder name radio buttons -->
+                    <!-- input: folder name text input -->
                     <div class="field-group" id="fieldgroup_folder_text">
                         <label class="mdc-text-field mdc-text-field--filled">
                             <span class="mdc-text-field__ripple"></span>
@@ -107,11 +115,11 @@
                             <span class="mdc-line-ripple"></span>
                         </label>
                     </div>
-
+                    <!-- / input: folder name text input -->
+                    <!-- input: select folder dropdown -->
                     <div
                         class="field-group fieldgroup-select"
                         id="fieldgroup_folder_select">
-                        <!---->
                         <div
                             class="mdc-select mdc-select--filled demo-width-class">
                             <div
@@ -149,7 +157,6 @@
                                 </span>
                                 <span class="mdc-line-ripple"></span>
                             </div>
-
                             <div
                                 class="mdc-select__menu mdc-menu mdc-menu-surface mdc-menu-surface--fullwidth">
                                 <ul
@@ -159,9 +166,8 @@
                                     aria-label="Select folder"></ul>
                             </div>
                         </div>
-                        <!---->
                     </div>
-
+                    <!-- / input: select folder dropdown -->
                     <div class="field-group">
                         <label class="mdc-text-field mdc-text-field--filled">
                             <span class="mdc-text-field__ripple"></span>
@@ -179,7 +185,6 @@
                             <span class="mdc-line-ripple"></span>
                         </label>
                     </div>
-
                     <div class="field-group">
                         <label class="mdc-text-field mdc-text-field--filled">
                             <span class="mdc-text-field__ripple"></span>
@@ -198,13 +203,13 @@
                             <span class="mdc-line-ripple"></span>
                         </label>
                     </div>
-
                     <div class="field-group">
                         <label class="mdc-button mdc-button--outlined">
                             Find Image
                             <input class="inp-file" type="file" id="inp_file" />
                         </label>
                     </div>
+                    <!-- edit bookmark submit/cancel buttons -->
                     <footer class="mdc-dialog__actions">
                         <button
                             type="button"
@@ -221,10 +226,12 @@
                             </span>
                         </button>
                     </footer>
+                    <!-- / edit bookmark submit/cancel buttons -->
                 </div>
             </div>
             <div class="mdc-dialog__scrim"></div>
         </div>
+        <!-- / modal edit bookmark -->
 
         <!-- modal settings-->
         <div
@@ -255,6 +262,7 @@
                             Export Bookmarks
                         </button>
                     </div>
+                    <!-- settings save/cancel buttons -->
                     <footer class="mdc-dialog__actions">
                         <button
                             type="button"
@@ -267,15 +275,14 @@
                             class="mdc-button mdc-button--raised"
                             id="btn_update_settings">
                             <div class="mdc-button__ripple"></div>
-                            <span class="mdc-button__label">
-                                Update Settings
-                            </span>
+                            <span class="mdc-button__label">Save</span>
                         </button>
                     </footer>
                 </div>
             </div>
             <div class="mdc-dialog__scrim"></div>
         </div>
+        <!-- / modal settings-->
         <script src="node_modules/material-components-web/dist/material-components-web.min.js"></script>
         <script src="assets/js/api.js"></script>
         <script src="assets/js/export.js"></script>
