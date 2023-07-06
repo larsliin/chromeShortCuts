@@ -12,10 +12,13 @@ const inpFile = document.getElementById('inp_file');
 const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const foldersContainer = document.getElementById('folders_container');
+const inpBackgroundcolor = document.getElementById('inp_backgroundcolor');
+const btnResetBackgroundColor = document.getElementById('btn_reset_background_color');
 const inpImport = document.getElementById('inp_import');
 const btnExport = document.getElementById('btn_export');
 const btnCancelSettings = document.getElementById('btn_cancel_settings');
 const btnUpdateSettings = document.getElementById('btn_update_settings');
+const foldersOuter = document.getElementById('folders_outer');
 const rootFolderName = 'Shortcutters';
 const homeFolderName = '_root';
 const homeFolderDisplayName = 'Home';
@@ -25,6 +28,8 @@ let rootFolderId;
 let editBookmarkId;
 let selectedFolderStr;
 let selectedFolderId;
+let backgroundColor = '';
+const backgroundColorDefault = '#f0f0f0';
 
 btnSettings.addEventListener('click', openSettings);
 btnAddBookmark.addEventListener('click', openEditBookmark);
@@ -38,6 +43,7 @@ btnExport.addEventListener('click', onExportBtnClick);
 btnExport.addEventListener('click', onExportBtnClick);
 btnCancelSettings.addEventListener('click', onUpdateCancel);
 btnUpdateSettings.addEventListener('click', onUpdateSettings);
+btnResetBackgroundColor.addEventListener('click', onResetBackgroundColor);
 
 chrome.bookmarks.onCreated.addListener(onBrowserBookmarkCreated);
 chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
@@ -59,6 +65,19 @@ function onReaderLoad(event) {
 
 function onUpdateCancel() {
     importFile = undefined;
+}
+
+function onResetBackgroundColor() {
+
+    const styles = window.getComputedStyle(foldersOuter);
+
+    // Get the background color property
+    // rgbToHex(styles.backgroundColor)
+
+    inpBackgroundcolor.value = backgroundColorDefault;
+
+    clearStorageItem('backgroundColor');
+    foldersOuter.style.backgroundColor = '';
 }
 
 async function onUpdateSettings() {
@@ -83,6 +102,11 @@ async function onUpdateSettings() {
         const importBookmarksResponse = await importBookmarks(importFile, flatFolderMapping);
         importBookmarkImages(importBookmarksResponse);
     }
+
+    // update background color
+    backgroundColor = inpBackgroundcolor.value;
+    foldersOuter.style.backgroundColor = backgroundColor;
+    setLocalStorage({ backgroundColor });
 
     dialogSettings.close();
 
@@ -737,6 +761,14 @@ async function init() {
 
     if (rootId) {
         rootFolderId = rootId;
+    }
+
+    const bgColor = await getLocalStorage('backgroundColor');
+    if (bgColor) {
+        foldersOuter.style.backgroundColor = bgColor;
+        inpBackgroundcolor.value = bgColor;
+    } else {
+        inpBackgroundcolor.value = backgroundColorDefault;
     }
 
     await initBookmarks();
