@@ -1,7 +1,9 @@
+
 const textFields = document.querySelectorAll('.mdc-text-field');
 const dialogSettings = new mdc.dialog.MDCDialog(document.getElementById('dialog_settings'));
 const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmark'));
-let bookmarks = [];
+const navArrowLeft = document.getElementById('nav_arrow_left');
+const navArrowRight = document.getElementById('nav_arrow_right');
 const btnSettings = document.getElementById('btn_settings');
 const btnAddBookmark = document.getElementById('btn_add_bookmark');
 const inpFolder = document.getElementById('inp_folder');
@@ -12,6 +14,7 @@ const inpFile = document.getElementById('inp_file');
 const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const foldersContainer = document.getElementById('folders_container');
+const checkboxEnableArrowNav = document.getElementById('checkbox_enable_arrow_nav');
 const inpBackgroundcolor = document.getElementById('inp_backgroundcolor');
 const btnResetBackgroundColor = document.getElementById('btn_reset_background_color');
 const inpImport = document.getElementById('inp_import');
@@ -22,6 +25,7 @@ const foldersOuter = document.getElementById('folders_outer');
 const rootFolderName = 'Shortcutters';
 const homeFolderName = '_root';
 const homeFolderDisplayName = 'Home';
+let bookmarks = [];
 let imageFile;
 let importFile;
 let rootFolderId;
@@ -44,6 +48,8 @@ btnExport.addEventListener('click', onExportBtnClick);
 btnCancelSettings.addEventListener('click', onUpdateCancel);
 btnUpdateSettings.addEventListener('click', onUpdateSettings);
 btnResetBackgroundColor.addEventListener('click', onResetBackgroundColor);
+navArrowLeft.addEventListener('click', onNavArrowClick);
+navArrowRight.addEventListener('click', onNavArrowClick);
 
 chrome.bookmarks.onCreated.addListener(onBrowserBookmarkCreated);
 chrome.bookmarks.onRemoved.addListener(onBrowserBookmarkRemoved);
@@ -70,9 +76,6 @@ function onUpdateCancel() {
 function onResetBackgroundColor() {
 
     const styles = window.getComputedStyle(foldersOuter);
-
-    // Get the background color property
-    // rgbToHex(styles.backgroundColor)
 
     inpBackgroundcolor.value = backgroundColorDefault;
 
@@ -107,6 +110,20 @@ async function onUpdateSettings() {
     backgroundColor = inpBackgroundcolor.value;
     foldersOuter.style.backgroundColor = backgroundColor;
     setLocalStorage({ backgroundColor });
+
+    // enable arrow nav
+    const arrLeft = document.getElementById('nav_arrow_left');
+    const arrRight = document.getElementById('nav_arrow_right');
+
+    if (checkboxEnableArrowNav.checked) {
+        arrLeft.style.display = 'block';
+        arrRight.style.display = 'block';
+        setLocalStorage({ 'arrowNavigation': true });
+    } else {
+        arrLeft.style.display = '';
+        arrRight.style.display = '';
+        clearStorageItem('arrowNavigation');
+    }
 
     dialogSettings.close();
 
@@ -232,9 +249,6 @@ function arraymove(arr, fromIndex, toIndex) {
 /*
  * ADD-BOOKMARK MODAL
  */
-
-
-
 textFields.forEach((textField) => {
     new mdc.textField.MDCTextField(textField);
 });
@@ -771,6 +785,15 @@ async function init() {
         inpBackgroundcolor.value = backgroundColorDefault;
     }
 
+    // enable/disable arrow navigation
+    const arrowNavResponse = await getLocalStorage('arrowNavigation');
+
+    if (arrowNavResponse) {
+        document.getElementById('nav_arrow_left').style.display = 'block';
+        document.getElementById('nav_arrow_right').style.display = 'block';
+        checkboxEnableArrowNav.checked = true;
+    }
+
     await initBookmarks();
 
     renderFolderSelect();
@@ -791,5 +814,3 @@ async function init() {
 }
 
 init();
-
-

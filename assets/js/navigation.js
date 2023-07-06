@@ -133,3 +133,25 @@ async function goToSlide() {
 
     setActiveNav(document.querySelectorAll('.navigation-item')[currentSlideIndex]);
 }
+
+function onNavArrowClick(event) {
+    const dir = event.target.id.split('_')[2];
+    let index = 0;
+    switch (dir) {
+        case 'left':
+            if (currentSlideIndex > 0) {
+                index = currentSlideIndex - 1;
+            } else {
+                index = 0;
+            }
+            break;
+        case 'right':
+            if (currentSlideIndex < bookmarks.length - 1) {
+                index = currentSlideIndex + 1;
+            } else {
+                index = bookmarks.length - 1;
+            }
+            break;
+    }
+    slide(index);
+}
