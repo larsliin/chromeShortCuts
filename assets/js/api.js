@@ -153,7 +153,7 @@ async function clearImageStorage() {
     });
 };
 
-
+// remove local storage item
 async function clearStorageItem(id) {
     return new Promise((resolve, reject) => {
         chrome.storage.local.remove([id], function () {

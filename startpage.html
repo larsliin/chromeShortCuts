@@ -60,6 +60,12 @@
         </div>
         <!-- / bottom navigation dots -->
 
+        <!-- Clearbit log credits -->
+        <div class="clearbit-credit">
+            <a href="https://clearbit.com">Logos provided by Clearbit</a>
+        </div>
+        <!-- / Clearbit log credits -->
+
         <!-- modal edit bookmark -->
         <div
             id="dialog_add_bookmark"
@@ -212,10 +218,20 @@
                         </label>
                     </div>
                     <div class="field-group">
+                        <span class="bookmark preview" id="edit_image_preview">
+                            <span class="bookmark-image-container">
+                                <span class="bookmark-image"></span>
+                            </span>
+                        </span>
                         <label class="mdc-button mdc-button--outlined">
-                            Find Image
+                            <span id="label_find_image"> Find Image </span>
                             <input class="inp-file" type="file" id="inp_file" />
                         </label>
+                        <button
+                            class="mdc-button edit-clear-image-btn ml-10"
+                            id="btn_clear_image">
+                            <span class="mdc-button__label"> Clear image </span>
+                        </button>
                     </div>
                     <!-- edit bookmark submit/cancel buttons -->
                     <footer class="mdc-dialog__actions">

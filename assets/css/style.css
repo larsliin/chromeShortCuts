@@ -124,6 +124,12 @@ BOOKMARKS
     width: 115px;
 }
 
+.bookmark.preview {
+    display: none;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
 .bookmark-link {
     align-items: center;
     display: flex;
@@ -131,7 +137,7 @@ BOOKMARKS
     text-decoration: none;
 }
 
-.bookmark-image-inset {
+.bookmark-image-overlay {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -140,7 +146,7 @@ BOOKMARKS
     transition: opacity 0.05s;
 }
 
-.bookmark-link:active .bookmark-image-inset {
+.bookmark-link:active .bookmark-image-overlay {
     opacity: 1;
 }
 
@@ -162,7 +168,7 @@ BOOKMARKS
     overflow: hidden;
 }
 
-.bookmark:hover .bookmark-image-container {
+.bookmark.list:hover .bookmark-image-container {
     transform: perspective(400px) rotateY(10deg) scale(1.05);
     box-shadow: 0 0 25px 0px rgba(0, 0, 0, 0.15);
 }
@@ -279,8 +285,8 @@ NAVIGATION
     top: 50%;
     transform: translateY(-50%);
     z-index: 5;
-    opacity: .25;
-    transition: opacity .15s;
+    opacity: 0.25;
+    transition: opacity 0.15s;
     display: none;
 }
 
@@ -298,7 +304,12 @@ NAVIGATION
     padding-right: 10px;
 }
 
-/* SETTINGS */
+/* EDIT MODAL */
+.edit-clear-image-btn {
+    display: none;
+}
+
+/* SETTINGS MODAL */
 .mdc-dialog__actions {
     padding-left: 0;
     padding-right: 0;
@@ -320,4 +331,11 @@ NAVIGATION
 
 .field-group.fieldgroup-select {
     display: none;
+}
+
+.clearbit-credit {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 0 0 25px 10px;
 }

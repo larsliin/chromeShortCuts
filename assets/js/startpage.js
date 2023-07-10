@@ -7,10 +7,12 @@ const navArrowRight = document.getElementById('nav_arrow_right');
 const btnSettings = document.getElementById('btn_settings');
 const btnAddBookmark = document.getElementById('btn_add_bookmark');
 const inpFolder = document.getElementById('inp_folder');
+const btnClearImage = document.getElementById('btn_clear_image');
 const inpSelectFolder = document.getElementById('inp_select_folder');
 const inpTitle = document.getElementById('inp_title');
 const inpUrl = document.getElementById('inp_url');
 const inpFile = document.getElementById('inp_file');
+const editImagePreview = document.getElementById('edit_image_preview');
 const btnSubmit = document.getElementById('btn_submit');
 const modal = document.getElementById('modal');
 const foldersContainer = document.getElementById('folders_container');
@@ -45,6 +47,7 @@ inpFile.addEventListener('change', onAddFile);
 inpImport.addEventListener('change', onImportBtnClick);
 btnExport.addEventListener('click', onExportBtnClick);
 btnExport.addEventListener('click', onExportBtnClick);
+btnClearImage.addEventListener('click', onClearImageClick);
 btnCancelSettings.addEventListener('click', onUpdateCancel);
 btnUpdateSettings.addEventListener('click', onUpdateSettings);
 btnResetBackgroundColor.addEventListener('click', onResetBackgroundColor);
@@ -74,9 +77,6 @@ function onUpdateCancel() {
 }
 
 function onResetBackgroundColor() {
-
-    const styles = window.getComputedStyle(foldersOuter);
-
     inpBackgroundcolor.value = backgroundColorDefault;
 
     clearStorageItem('backgroundColor');
@@ -323,6 +323,13 @@ dialog.listen('MDCDialog:closed', () => {
     document.getElementById('inp_radio_1').checked = true;
     document.getElementById('fieldgroup_folder_text').classList.remove('d-none');
     document.getElementById('fieldgroup_folder_select').classList.remove('d-block');
+
+    // reset image preview
+    editImagePreview.classList.remove('d-block');
+    const imageContainer = editImagePreview.querySelector('.bookmark-image');
+    imageContainer.style.backgroundImage = '';
+
+    btnClearImage.classList.remove('d-inline-block');
 });
 
 dialog.listen('MDCDialog:opened', () => {
@@ -349,11 +356,38 @@ async function openEditBookmark() {
         document.getElementById('inp_radio_2').checked = true;
         document.getElementById('fieldgroup_folder_text').classList.add('d-none');
         document.getElementById('fieldgroup_folder_select').classList.add('d-block');
+
+        // image preview
+        const storageItem = await getLocalStorage(bookmark.id);
+        if (storageItem) {
+            editImagePreview.classList.add('d-block');
+            const imageContainer = editImagePreview.querySelector('.bookmark-image');
+            imageContainer.style.backgroundImage = `url('${storageItem.image}')`;
+            findImageBtnText = 'Update Image';
+
+            btnClearImage.classList.add('d-inline-block');
+        } else {
+            findImageBtnText = 'Find Image';
+
+        }
+    } else {
+        findImageBtnText = 'Find Image';
+
     }
+    document.getElementById('label_find_image').innerText = findImageBtnText;
 
     mdcSelect.setSelectedIndex(folderIndex);
 
     dialog.open();
+}
+
+function onClearImageClick() {
+    editImagePreview.classList.remove('d-block');
+    const imageContainer = editImagePreview.querySelector('.bookmark-image');
+    imageContainer.style.backgroundImage = ``;
+    document.getElementById('label_find_image').innerText = 'Find Image';
+    btnClearImage.classList.remove('d-inline-block');
+    imageFile = null;
 }
 
 // add-bookmark input elements event handlers
@@ -378,8 +412,16 @@ document.querySelectorAll("input[name='folderRadioGrp']").forEach((input) => {
     input.addEventListener('change', onRadioFolderModeChange);
 });
 
-function onAddFile(event) {
+async function onAddFile(event) {
     imageFile = event.target.files[0];
+
+    const base64 = await getBase64Data(imageFile);
+    const imageContainer = editImagePreview.querySelector('.bookmark-image');
+    imageContainer.style.backgroundImage = `url('${base64}')`;
+
+    editImagePreview.classList.add('d-block');
+
+    btnClearImage.classList.add('d-inline-block');
 }
 
 async function onCreateBookmarkClick() {
@@ -398,7 +440,19 @@ async function onCreateBookmarkClick() {
         const bookmark = getBookmarkFromBookmarks(editBookmarkId);
         const homeFolderId = bookmarks.find(e => e.title === homeFolderName).id;
         const parentId = folder === '' ? homeFolderId : folderId;
-        // debugger;
+
+        const imagePreviewContainer = editImagePreview.querySelector('.bookmark-image');
+
+        if (imagePreviewContainer.style.backgroundImage === '') {
+            const bookmarkElem = document.getElementById(`bookmark_${editBookmarkId}`);
+
+            if (bookmarkElem.querySelector('.bookmark-image')) {
+                clearStorageItem(editBookmarkId);
+
+                bookmarkElem.querySelector('.bookmark-image').remove();
+            }
+        }
+
         await editBookmark(editBookmarkId, bookmark.parentId, { parentId, title, url });
     } else {
         await createBookmark({ folder, title, url });
@@ -436,9 +490,7 @@ async function editBookmark(id, fromParentId, data) {
         }
         return false;
     });
-    // debugger;
-    if (fromParentId !== parentId) {
-    }
+
     await moveBookmark(id, { parentId: bookmark.parentId });
     await updateBookmark(id, data);
     await updateImage(id, imageFile);
@@ -656,7 +708,7 @@ async function addBookmarkToDOM(bookmark, folderid, index) {
     linkElem.appendChild(linkImgContainerElem);
 
     const linkInnerShadowElem = document.createElement('span');
-    linkInnerShadowElem.className = 'bookmark-image-inset';
+    linkInnerShadowElem.className = 'bookmark-image-overlay';
     linkImgContainerElem.appendChild(linkInnerShadowElem);
 
     const linkTitleContainer = document.createElement('span');
@@ -672,7 +724,8 @@ async function addBookmarkToDOM(bookmark, folderid, index) {
     editElem.addEventListener('click', onEditClick);
     linkContainerElem.appendChild(editElem);
 
-    linkContainerElem.className = 'bookmark';
+    linkContainerElem.classList.add('bookmark');
+    linkContainerElem.classList.add('list');
     linkContainerElem.id = `bookmark_${bookmark.id}`;
 
     if (index !== undefined) {
