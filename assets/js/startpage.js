@@ -494,9 +494,9 @@ async function onCreateBookmarkClick() {
         await editBookmark(editBookmarkId, bookmark.parentId, { parentId, title, url });
     } else {
         await createBookmark({ folder, title, url });
-    }
 
-    renderFolderSelect();
+        renderFolderSelect();
+    }
 }
 
 async function getBase64Data(file) {
@@ -529,9 +529,12 @@ async function editBookmark(id, fromParentId, data) {
         return false;
     });
 
-    await moveBookmark(id, { parentId: bookmark.parentId });
+    if (data.parentId && fromParentId !== data.parentId) {
+        await moveBookmark(id, { parentId: bookmark.parentId });
+        applyDragAndDrop(currentSlideIndex);
+    }
     await updateBookmark(id, data);
-    await updateImage(id, imageFile);
+    await updateImage(bookmark, imageFile);
     imageFile = null;
 
     updateBookmarkDOM({ parentId, id, title, url });
@@ -539,14 +542,19 @@ async function editBookmark(id, fromParentId, data) {
     dialog.close();
 }
 
-async function updateImage(id, img) {
+async function updateImage(bookmark, img) {
     if (!img) {
         return;
     }
-
+    console.log(bookmark);
     const base64 = await getBase64Data(img);
-    await setLocalStorage({ [id]: { image: base64 } });
-
+    await setLocalStorage({
+        [bookmark.id]: {
+            image: base64,
+            url: bookmark.url,
+            title: bookmark.title
+        }
+    });
 }
 
 async function updateBookmarkDOM(bookmark) {
@@ -683,6 +691,8 @@ async function onBrowserBookmarkRemoved(bookmarkid) {
             chrome.bookmarks.remove(folder.id);
         } else {
             elem.remove();
+
+            clearStorageItem(elem.id);
 
             bookmarks = bookmarks.map(obj => ({
                 ...obj,
