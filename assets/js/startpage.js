@@ -123,7 +123,6 @@ async function onUpdateSettings() {
     }
 
     if (importIconsFile) {
-        s
         importIconsFile.forEach((item) => {
             const bookmarkId = Object.keys(item)[0];
             const key = Object.keys(item)[0];

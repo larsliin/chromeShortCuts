@@ -69,6 +69,7 @@ function buildDragAndDropInit(parent) {
 
 function applyDragAndDrop(folderindex) {
     const folder = document.querySelectorAll('.folder')[folderindex];
-
-    buildDragAndDropInit(folder.querySelector('.folder-inner'));
+    if (folder) {
+        buildDragAndDropInit(folder.querySelector('.folder-inner'));
+    }
 }
