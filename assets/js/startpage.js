@@ -128,9 +128,9 @@ async function onUpdateSettings() {
             const key = Object.keys(item)[0];
             const imageValue = item[key].image;
 
-            const linkImgContainerElem = document.querySelector(`#bookmark_${bookmarkId} .bookmark-image-container`);
+            const bookmarkLinkElem = document.querySelector(`a[href="${item[key].url}"]`);
+            const linkImgContainerElem = bookmarkLinkElem.querySelector(`.bookmark-image-container`);
             if (linkImgContainerElem) {
-
                 const imgElem = document.createElement('span');
                 imgElem.style.backgroundImage = `url('${imageValue}')`;
                 imgElem.classList = 'bookmark-image';
