@@ -236,3 +236,28 @@ async function storeImages(obj) {
             });
     });
 };
+
+async function getBase64ImageFromUrl(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Image download failed. Response status: ' + response.status);
+        }
+
+        const blob = await response.blob();
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                resolve(base64data);
+            };
+            reader.onerror = () => {
+                reject(new Error('Failed to read the image file.'));
+            };
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        throw new Error('Failed to fetch the image URL: ' + error.message);
+    }
+}

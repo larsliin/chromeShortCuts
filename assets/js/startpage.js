@@ -1,4 +1,3 @@
-
 const textFields = document.querySelectorAll('.mdc-text-field');
 const dialogSettings = new mdc.dialog.MDCDialog(document.getElementById('dialog_settings'));
 const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog_add_bookmark'));
@@ -46,6 +45,7 @@ btnSubmit.addEventListener('click', onCreateBookmarkClick);
 inpFolder.addEventListener('keydown', onInpKeyDown);
 inpTitle.addEventListener('keydown', onInpKeyDown);
 inpUrl.addEventListener('keydown', onInpKeyDown);
+inpUrl.addEventListener('blur', onInpUrlBlur);
 inpFile.addEventListener('change', onAddFile);
 
 inpImport.addEventListener('change', onImportBtnClick);
@@ -130,10 +130,11 @@ async function onUpdateSettings() {
 
             const bookmarkLinkElem = document.querySelector(`a[href="${item[key].url}"]`);
             const linkImgContainerElem = bookmarkLinkElem.querySelector(`.bookmark-image-container`);
-            const bookmarkElemId = bookmarkLinkElem.parentNode.id.split('_')[1];;
+            const bookmarkElemId = bookmarkLinkElem.parentNode.id.split('_')[1];
 
             // debugger;
-            if (linkImgContainerElem) {
+            linkImgContainerElem.innerHTML = '';
+            if (linkImgContainerElem && imageValue) {
                 const imgElem = document.createElement('span');
                 imgElem.style.backgroundImage = `url('${imageValue}')`;
                 imgElem.classList = 'bookmark-image';
@@ -144,6 +145,9 @@ async function onUpdateSettings() {
                 const itemValue = item[itemKey];
                 const newItem = { [bookmarkElemId]: itemValue };
                 setLocalStorage(newItem);
+            }
+            if (linkImgContainerElem && !imageValue) {
+                linkImgContainerElem.classList.add('bi-star-fill');
             }
         });
     }
@@ -344,8 +348,6 @@ function renderFolderSelect(selectedindex) {
     mdcSelect.setSelectedIndex(index);
 }
 
-inpTitle.value = Date.now();
-
 dialogSettings.listen('MDCDialog:closed', () => {
     inpImport.value = '';
 
@@ -358,8 +360,8 @@ dialog.listen('MDCDialog:closed', () => {
     selectedFolderStr = null;
     selectedFolderId = null;
     inpFolder.value = '';
-    inpTitle.value = Date.now();
-    inpUrl.value = 'http://123.com';
+    inpTitle.value = '';
+    inpUrl.value = '';
     inpFile.value = '';
 
     editBookmarkId = null;
@@ -432,6 +434,7 @@ function onClearImageClick() {
     document.getElementById('label_find_image').innerText = 'Find Image';
     btnClearImage.classList.remove('d-inline-block');
     imageFile = null;
+    imageFromClearBit = null;
 }
 
 // add-bookmark input elements event handlers
@@ -439,6 +442,35 @@ function onInpKeyDown(event) {
     if (event.keyCode === 13) {
         onCreateBookmarkClick();
         event.preventDefault();
+    }
+}
+
+let imageFromClearBit;
+async function onInpUrlBlur(event) {
+    const val = event.target.value;
+    if (!val) {
+        return;
+    }
+
+    if (val && urlValid(val)) {
+        const domain = getDomainFromUrl(val);
+        const imageUrl = `https://logo.clearbit.com/${domain}?size=200`
+
+        fetchClearBitImage(imageUrl)
+        return;
+    }
+}
+
+async function fetchClearBitImage(imageUrl) {
+    try {
+        const base64data = await getBase64ImageFromUrl(imageUrl);
+        imageFromClearBit = base64data;
+        imageFile = null;
+
+        updateLogoPreview(base64data);
+    } catch (error) {
+        imageFile = null;
+        console.error('Error:', error);
     }
 }
 
@@ -458,8 +490,14 @@ document.querySelectorAll("input[name='folderRadioGrp']").forEach((input) => {
 
 async function onAddFile(event) {
     imageFile = event.target.files[0];
+    imageFromClearBit = null;
 
     const base64 = await getBase64Data(imageFile);
+
+    updateLogoPreview(base64);
+}
+
+function updateLogoPreview(base64) {
     const imageContainer = editImagePreview.querySelector('.bookmark-image');
     imageContainer.style.backgroundImage = `url('${base64}')`;
 
@@ -539,24 +577,34 @@ async function editBookmark(id, fromParentId, data) {
         await moveBookmark(id, { parentId: bookmark.parentId });
         applyDragAndDrop(currentSlideIndex);
     }
+
     await updateBookmark(id, data);
-    await updateImage(bookmark, imageFile);
+
+    if (imageFile) {
+        const base64Response = await getBase64Data(imageFile)
+        await updateImage(bookmark, base64Response);
+    }
+
+    if (imageFromClearBit) {
+        await updateImage(bookmark, imageFromClearBit);
+    }
+
     imageFile = null;
+    imageFromClearBit = null;
 
     updateBookmarkDOM({ parentId, id, title, url });
 
     dialog.close();
 }
 
-async function updateImage(bookmark, img) {
-    if (!img) {
+async function updateImage(bookmark, image) {
+    if (!image) {
         return;
     }
-    console.log(bookmark);
-    const base64 = await getBase64Data(img);
+
     await setLocalStorage({
         [bookmark.id]: {
-            image: base64,
+            image,
             url: bookmark.url,
             title: bookmark.title
         }
@@ -642,11 +690,18 @@ async function onBrowserBookmarkCreated(event, bookmark) {
         addBookmarkToDOM(bookmark, folder.id);
 
         if (imageFile) {
-            await updateImage(bookmark.id, imageFile);
-            imageFile = null;
+            const base64Response = await getBase64Data(imageFile);
+            await updateImage(bookmark, base64Response);
             addImageToDom(bookmark);
         }
 
+        if (imageFromClearBit) {
+            await updateImage(bookmark, imageFromClearBit);
+            addImageToDom(bookmark);
+        }
+
+        imageFile = null;
+        imageFromClearBit = null;
         slide(index);
     } else {
 
@@ -837,7 +892,7 @@ async function addImageToDom(bookmark) {
 
     const storageItem = await getLocalStorage(id);
 
-    if (storageItem) {
+    if (storageItem && storageItem.image) {
         const imgElem = document.createElement('span');
         imgElem.style.backgroundImage = `url('${storageItem.image}')`;
         imgElem.classList = 'bookmark-image';
