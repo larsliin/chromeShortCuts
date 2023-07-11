@@ -130,6 +130,9 @@ async function onUpdateSettings() {
 
             const bookmarkLinkElem = document.querySelector(`a[href="${item[key].url}"]`);
             const linkImgContainerElem = bookmarkLinkElem.querySelector(`.bookmark-image-container`);
+            const bookmarkElemId = bookmarkLinkElem.parentNode.id.split('_')[1];;
+
+            // debugger;
             if (linkImgContainerElem) {
                 const imgElem = document.createElement('span');
                 imgElem.style.backgroundImage = `url('${imageValue}')`;
@@ -137,7 +140,10 @@ async function onUpdateSettings() {
                 linkImgContainerElem.classList.remove('bi-star-fill');
                 linkImgContainerElem.appendChild(imgElem);
 
-                setLocalStorage(item);
+                const itemKey = Object.keys(item)[0];
+                const itemValue = item[itemKey];
+                const newItem = { [bookmarkElemId]: itemValue };
+                setLocalStorage(newItem);
             }
         });
     }
