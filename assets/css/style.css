@@ -146,10 +146,6 @@ BOOKMARKS
     transition: opacity 0.05s;
 }
 
-.bookmark-link:active .bookmark-image-overlay {
-    opacity: 1;
-}
-
 .bookmark-image-container {
     align-items: center;
     background-color: #fff;
@@ -173,9 +169,18 @@ BOOKMARKS
     box-shadow: 0 0 25px 0px rgba(0, 0, 0, 0.15);
 }
 
-.bookmark-link:active .bookmark-image-container {
+.bookmark.list .bookmark-link:active .bookmark-image-container {
     transform: perspective(400px) rotateY(-10deg) scale(0.95);
     box-shadow: 0 0 25px 0px rgba(0, 0, 0, 0.15);
+}
+
+.bookmark.list.dragging .bookmark-link .bookmark-image-container {
+    transform: none;
+    box-shadow: 0px 0 20px 0px rgba(0, 0, 0, 0.15);
+}
+
+.bookmark-link:active .bookmark-image-overlay {
+    opacity: 1;
 }
 
 .bookmark-image {
@@ -338,4 +343,17 @@ NAVIGATION
     bottom: 0;
     left: 0;
     margin: 0 0 25px 10px;
+}
+
+/*
+DRAG AND DROP
+*/
+
+.dragging {
+    opacity: 0.5;
+    z-index: 999;
+    position: relative;
+}
+
+.drag-spacer {
 }

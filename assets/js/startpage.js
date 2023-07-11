@@ -700,8 +700,8 @@ async function addBookmarkToDOM(bookmark, folderid, index) {
     const linkElem = document.createElement('a');
     linkElem.href = bookmark.url;
     linkElem.className = 'bookmark-link';
+    linkElem.draggable = true;
     linkContainerElem.appendChild(linkElem);
-
 
     const linkImgContainerElem = document.createElement('span');
     linkImgContainerElem.className = 'bookmark-image-container';
@@ -853,8 +853,6 @@ async function init() {
 
     buildNavigation();
 
-    await goToSlide();
-
     bookmarks.forEach((folder) => {
         addFolderToDOM(folder);
 
@@ -864,6 +862,8 @@ async function init() {
     });
 
     foldersContainer.addEventListener('transitionend', onSlideEnd);
+
+    await goToSlide();
 }
 
 init();

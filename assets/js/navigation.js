@@ -82,6 +82,8 @@ function slide(index) {
     }
 
     currentSlideIndex = index;
+
+    applyDragAndDrop(currentSlideIndex);
 }
 
 function setActiveNav(item) {
@@ -111,25 +113,29 @@ function onSlideEnd() {
 }
 
 async function goToSlide() {
-    if (goToOpenedLast) {
-
-        let folderIndex = await getLocalStorage('sliderIndex');
-        if (folderIndex > bookmarks.length) {
-            folderIndex = bookmarks.length - 1;
-        }
-        if (folderIndex) {
-            currentSlideIndex = bookmarks[folderIndex]?.id;
-
-            slide(folderIndex);
-        }
-    } else {
-        setLocalStorage({ sliderIndex: 0 });
-    }
+    let folderIndex = await getLocalStorage('sliderIndex');
 
     setTimeout(() => {
         foldersContainer.classList.add('animated');
         foldersContainer.classList.add('d-flex');
     }, 0);
+
+    if (goToOpenedLast) {
+        if (folderIndex > bookmarks.length) {
+            folderIndex = bookmarks.length - 1;
+        }
+
+        if (folderIndex !== undefined) {
+            currentSlideIndex = bookmarks[folderIndex]?.id;
+
+            slide(folderIndex);
+
+            return;
+        }
+    } else {
+        setLocalStorage({ sliderIndex: 0 });
+    }
+    applyDragAndDrop(0);
 
     setActiveNav(document.querySelectorAll('.navigation-item')[currentSlideIndex]);
 }
