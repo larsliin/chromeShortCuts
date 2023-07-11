@@ -1,3 +1,4 @@
+// export/import bookmarks
 async function exportBookmarks() {
     const imgArr = await fetchLocalStorageBookmarks();
 
@@ -43,3 +44,26 @@ async function fetchLocalStorageBookmarks() {
     });
     return result;
 };
+
+
+// export/import bookmark icon images
+async function exportBookmarkIcons() {
+    const imgArr = await fetchLocalStorageBookmarks();
+
+    const jsonString = JSON.stringify(imgArr);
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([jsonString], { type: "application/json" }));
+    a.download = 'bookmark-icons-exported.json';
+    a.click();
+}
+
+function importBookmarkIcons(event) {
+    const reader = new FileReader();
+    reader.onload = onImportIconsReaderLoad;
+    reader.readAsText(event.target.files[0]);
+}
+
+function onImportIconsReaderLoad(event) {
+    importIconsFile = JSON.parse(event.target.result);
+}

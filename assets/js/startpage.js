@@ -21,6 +21,8 @@ const inpBackgroundcolor = document.getElementById('inp_backgroundcolor');
 const btnResetBackgroundColor = document.getElementById('btn_reset_background_color');
 const inpImport = document.getElementById('inp_import');
 const btnExport = document.getElementById('btn_export');
+const btnExportIcons = document.getElementById('btn_export_icons');
+const btnImportIcons = document.getElementById('inp_import_icons');
 const btnCancelSettings = document.getElementById('btn_cancel_settings');
 const btnUpdateSettings = document.getElementById('btn_update_settings');
 const foldersOuter = document.getElementById('folders_outer');
@@ -30,6 +32,7 @@ const homeFolderDisplayName = 'Home';
 let bookmarks = [];
 let imageFile;
 let importFile;
+let importIconsFile;
 let rootFolderId;
 let editBookmarkId;
 let selectedFolderStr;
@@ -44,9 +47,13 @@ inpFolder.addEventListener('keydown', onInpKeyDown);
 inpTitle.addEventListener('keydown', onInpKeyDown);
 inpUrl.addEventListener('keydown', onInpKeyDown);
 inpFile.addEventListener('change', onAddFile);
+
 inpImport.addEventListener('change', onImportBtnClick);
 btnExport.addEventListener('click', onExportBtnClick);
-btnExport.addEventListener('click', onExportBtnClick);
+
+btnImportIcons.addEventListener('change', onImportIconsBtnClick);
+btnExportIcons.addEventListener('click', onExportIconsBtnClick);
+
 btnClearImage.addEventListener('click', onClearImageClick);
 btnCancelSettings.addEventListener('click', onUpdateCancel);
 btnUpdateSettings.addEventListener('click', onUpdateSettings);
@@ -64,11 +71,19 @@ function onExportBtnClick() {
 
 function onImportBtnClick(event) {
     const reader = new FileReader();
-    reader.onload = onReaderLoad;
+    reader.onload = onImportReaderLoad;
     reader.readAsText(event.target.files[0]);
 }
 
-function onReaderLoad(event) {
+function onExportIconsBtnClick() {
+    exportBookmarkIcons();
+}
+
+function onImportIconsBtnClick(event) {
+    importBookmarkIcons(event);
+}
+
+function onImportReaderLoad(event) {
     importFile = JSON.parse(event.target.result);
 }
 
@@ -80,6 +95,7 @@ function onResetBackgroundColor() {
     inpBackgroundcolor.value = backgroundColorDefault;
 
     clearStorageItem('backgroundColor');
+
     foldersOuter.style.backgroundColor = '';
 }
 
@@ -106,6 +122,27 @@ async function onUpdateSettings() {
         importBookmarkImages(importBookmarksResponse);
     }
 
+    if (importIconsFile) {
+        s
+        importIconsFile.forEach((item) => {
+            const bookmarkId = Object.keys(item)[0];
+            const key = Object.keys(item)[0];
+            const imageValue = item[key].image;
+
+            const linkImgContainerElem = document.querySelector(`#bookmark_${bookmarkId} .bookmark-image-container`);
+            if (linkImgContainerElem) {
+
+                const imgElem = document.createElement('span');
+                imgElem.style.backgroundImage = `url('${imageValue}')`;
+                imgElem.classList = 'bookmark-image';
+                linkImgContainerElem.classList.remove('bi-star-fill');
+                linkImgContainerElem.appendChild(imgElem);
+
+                setLocalStorage(item);
+            }
+        });
+    }
+
     // update background color
     backgroundColor = inpBackgroundcolor.value;
     foldersOuter.style.backgroundColor = backgroundColor;
@@ -126,8 +163,6 @@ async function onUpdateSettings() {
     }
 
     dialogSettings.close();
-
-    importFile = undefined;
 }
 
 async function importBookmarkImages(bmarks) {
@@ -308,6 +343,10 @@ inpTitle.value = Date.now();
 
 dialogSettings.listen('MDCDialog:closed', () => {
     inpImport.value = '';
+
+    importFile = undefined;
+
+    importIconsFile = undefined;
 });
 
 dialog.listen('MDCDialog:closed', () => {
