@@ -82,6 +82,8 @@ body {
 
 .folders-container {
     display: none;
+    align-items: center;
+    height: 100%;
 }
 
 .folders-container.animated {
@@ -97,17 +99,17 @@ body {
 FOLDERS
 */
 .folder {
-    display: inline-flex;
-    height: 100vh;
     align-content: center;
-    justify-content: center;
+    display: inline-flex;
     flex: 0 0 100%;
+    justify-content: center;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
 }
 
 .folder-inner {
     display: flex;
     flex-wrap: wrap;
-    align-content: center;
     justify-content: center;
     max-width: 1024px;
     width: 100%;
