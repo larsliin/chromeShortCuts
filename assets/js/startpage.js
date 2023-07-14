@@ -553,6 +553,8 @@ async function onCreateBookmarkClick() {
 
         renderFolderSelect();
     }
+
+    applyDragAndDrop(currentSlideIndex);
 }
 
 async function getBase64Data(file) {
@@ -587,7 +589,6 @@ async function editBookmark(id, fromParentId, data) {
 
     if (data.parentId && fromParentId !== data.parentId) {
         await moveBookmark(id, { parentId: bookmark.parentId });
-        applyDragAndDrop(currentSlideIndex);
     }
 
     await updateBookmark(id, data);
@@ -723,6 +724,7 @@ async function onBrowserBookmarkCreated(event, bookmark) {
         }
 
         bookmarks.push(bookmark);
+
         if (bookmarks.length) {
             const folder = bookmarks.find(e => e.id === bookmark.id);
             if (!document.getElementById(`folder_${folder.id}`)) {
