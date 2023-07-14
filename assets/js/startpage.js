@@ -18,10 +18,12 @@ const foldersContainer = document.getElementById('folders_container');
 const checkboxEnableArrowNav = document.getElementById('checkbox_enable_arrow_nav');
 const inpBackgroundcolor = document.getElementById('inp_backgroundcolor');
 const btnResetBackgroundColor = document.getElementById('btn_reset_background_color');
-const inpImport = document.getElementById('inp_import');
+const btnImport = document.getElementById('inp_import');
 const btnExport = document.getElementById('btn_export');
-const btnExportIcons = document.getElementById('btn_export_icons');
 const btnImportIcons = document.getElementById('inp_import_icons');
+const btnExportIcons = document.getElementById('btn_export_icons');
+const inpReadonlyImportIcons = document.getElementById('inp_readonly_import_icons');
+const inpReadonlyImportBookmarks = document.getElementById('inp_readonly_import_bookmarks');
 const btnCancelSettings = document.getElementById('btn_cancel_settings');
 const btnUpdateSettings = document.getElementById('btn_update_settings');
 const foldersOuter = document.getElementById('folders_outer');
@@ -48,12 +50,16 @@ inpUrl.addEventListener('keydown', onInpKeyDown);
 inpUrl.addEventListener('blur', onInpUrlBlur);
 inpFile.addEventListener('change', onAddFile);
 
-inpImport.addEventListener('change', onImportBtnClick);
+btnImport.addEventListener('change', onImportBtnClick);
 btnExport.addEventListener('click', onExportBtnClick);
-
 btnImportIcons.addEventListener('change', onImportIconsBtnClick);
+inpReadonlyImportIcons.addEventListener('click', () => {
+    btnImportIcons.click();
+});
+inpReadonlyImportBookmarks.addEventListener('click', () => {
+    btnImport.click();
+});
 btnExportIcons.addEventListener('click', onExportIconsBtnClick);
-
 btnClearImage.addEventListener('click', onClearImageClick);
 btnCancelSettings.addEventListener('click', onUpdateCancel);
 btnUpdateSettings.addEventListener('click', onUpdateSettings);
@@ -70,9 +76,13 @@ function onExportBtnClick() {
 }
 
 function onImportBtnClick(event) {
+    if (!event.target.files.length) {
+        return;
+    }
     const reader = new FileReader();
     reader.onload = onImportReaderLoad;
     reader.readAsText(event.target.files[0]);
+    inpReadonlyImportBookmarks.value = event.target.files[0].name;
 }
 
 function onExportIconsBtnClick() {
@@ -349,11 +359,13 @@ function renderFolderSelect(selectedindex) {
 }
 
 dialogSettings.listen('MDCDialog:closed', () => {
-    inpImport.value = '';
+    btnImport.value = '';
 
     importFile = undefined;
+    inpReadonlyImportBookmarks.value = '';
 
     importIconsFile = undefined;
+    inpReadonlyImportIcons.value = '';
 });
 
 dialog.listen('MDCDialog:closed', () => {

@@ -53,15 +53,20 @@ async function exportBookmarkIcons() {
     const jsonString = JSON.stringify(imgArr);
 
     const a = document.createElement('a');
+
     a.href = URL.createObjectURL(new Blob([jsonString], { type: "application/json" }));
     a.download = 'bookmark-icons-exported.json';
     a.click();
 }
 
 function importBookmarkIcons(event) {
+    if (!event.target.files.length) {
+        return;
+    }
     const reader = new FileReader();
     reader.onload = onImportIconsReaderLoad;
     reader.readAsText(event.target.files[0]);
+    inpReadonlyImportIcons.value = event.target.files[0].name;
 }
 
 function onImportIconsReaderLoad(event) {
