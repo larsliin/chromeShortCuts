@@ -95,7 +95,7 @@ body {
     width: 100vw;
     /* background-color: #f0f0f0; */
     background: #f0f0f0;
-    background: radial-gradient(circle at 50% 50%, #ddd 0%, #f0f0f0 100%);
+    background: radial-gradient(circle at 50% 50%, #dfdfdf 0%, #fff 100%);
 }
 
 .folders-container {
